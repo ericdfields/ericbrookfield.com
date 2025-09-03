@@ -1,0 +1,70 @@
+---
+import ProjectCard from "./ProjectCard.astro";
+
+const projects = [
+    {
+        title: "VennDgram",
+        description:
+            "An interactive Venn diagram editor with a daily challenge component. Create, share, and solve visual logic puzzles.",
+        tags: ["Product Design", "Full-Stack", "Interactive"],
+        link: "https://venndgram.com",
+        featured: true,
+    },
+    {
+        title: "Devin Bramhall Portfolio",
+        description:
+            "Collaborated on design and development for a professional portfolio showcasing creative work and projects.",
+        tags: ["Web Design", "Development", "Collaboration"],
+        link: "https://devinbramhall.com",
+    },
+    {
+        title: "Enterprise CRM Platform",
+        description:
+            "Built and led development of flexible CRM solutions serving healthcare professionals, clinical trials, and pharmaceutical sales teams. Integrated with multiple third-party vendors and ETL pipelines.",
+        tags: ["Enterprise", "Healthcare", "Team Leadership"],
+    },
+];
+---
+
+<section class="projects">
+    <div class="container">
+        <h2>Selected Work</h2>
+        <p class="section-intro">
+            A showcase of recent projects and long-term enterprise solutions
+            I've architected and delivered.
+        </p>
+        <div class="projects-grid">
+            {projects.map((project) => <ProjectCard {...project} />)}
+        </div>
+    </div>
+</section>
+
+<style>
+    .projects {
+        padding: var(--spacing-xl) 0;
+        background: var(--color-background);
+    }
+
+    .projects h2 {
+        margin-bottom: var(--spacing-sm);
+        color: var(--color-text);
+    }
+
+    .section-intro {
+        font-size: 1.125rem;
+        margin-bottom: var(--spacing-lg);
+        max-width: 700px;
+    }
+
+    .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: var(--spacing-md);
+    }
+
+    @media (max-width: 768px) {
+        .projects-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

@@ -1,0 +1,145 @@
+---
+export interface Props {
+    title: string;
+    description: string;
+    tags?: string[];
+    link?: string;
+    image?: string;
+    featured?: boolean;
+}
+
+const {
+    title,
+    description,
+    tags = [],
+    link,
+    image,
+    featured = false,
+} = Astro.props;
+---
+
+<article class={`project-card ${featured ? "featured" : ""}`}>
+    {
+        image && (
+            <div class="project-image">
+                <img src={image} alt={`${title} screenshot`} loading="lazy" />
+            </div>
+        )
+    }
+    <div class="project-content">
+        <h3>{title}</h3>
+        <p>{description}</p>
+        {
+            tags.length > 0 && (
+                <div class="tags">
+                    {tags.map((tag) => (
+                        <span class="tag">{tag}</span>
+                    ))}
+                </div>
+            )
+        }
+        {
+            link && (
+                <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="project-link"
+                >
+                    View Project →
+                </a>
+            )
+        }
+    </div>
+</article>
+
+<style>
+    .project-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .project-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(90, 159, 204, 0.15);
+        border-color: var(--color-primary-light);
+    }
+
+    .project-card.featured {
+        grid-column: span 2;
+    }
+
+    .project-image {
+        width: 100%;
+        height: 200px;
+        background: var(--color-surface);
+        overflow: hidden;
+    }
+
+    .project-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .project-card:hover .project-image img {
+        transform: scale(1.05);
+    }
+
+    .project-content {
+        padding: var(--spacing-md);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .project-content h3 {
+        margin-bottom: var(--spacing-sm);
+        color: var(--color-text);
+    }
+
+    .project-content p {
+        margin-bottom: var(--spacing-sm);
+        flex: 1;
+    }
+
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .tag {
+        padding: 0.25rem 0.75rem;
+        background: var(--color-surface);
+        color: var(--color-primary);
+        font-size: 0.875rem;
+        font-weight: 500;
+        font-family: "Inter", sans-serif;
+    }
+
+    .project-link {
+        display: inline-flex;
+        align-items: center;
+        font-weight: 500;
+        color: var(--color-primary);
+        margin-top: auto;
+    }
+
+    .project-link:hover {
+        color: var(--color-primary-dark);
+    }
+
+    @media (max-width: 768px) {
+        .project-card.featured {
+            grid-column: span 1;
+        }
+    }
+</style>

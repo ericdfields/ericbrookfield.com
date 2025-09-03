@@ -1,0 +1,161 @@
+---
+import { getCollection } from "astro:content";
+
+const posts = await getCollection("blog");
+const sortedPosts = posts
+    .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+    .slice(0, 5);
+---
+
+<section class="blog-posts">
+    <div class="container">
+        <h2>Recent Writing</h2>
+        <p class="section-intro">
+            Thoughts on technology, design, and the craft of building digital
+            products.
+        </p>
+        <div class="posts-list">
+            {
+                sortedPosts.map((post) => {
+                    const date = post.data.date;
+
+                    // Extract the URL path from the original URL or generate from slug
+                    const urlPattern = new RegExp(
+                        "/(\\d{4})/(\\d{2})/(\\d{2})/([^/]+)\\.html",
+                    );
+                    const urlMatch = post.data.url.match(urlPattern);
+                    const localUrl = urlMatch
+                        ? `/${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
+                        : `/blog/${post.slug}`;
+
+                    // Get plain text from post body - strip HTML tags
+                    const plainText = post.body
+                        .replace(/<[^>]*>/g, "")
+                        .replace(/\n+/g, " ")
+                        .trim();
+
+                    // Use title if available, otherwise use first part of content
+                    const displayTitle =
+                        post.data.title ||
+                        (plainText
+                            ? plainText.substring(0, 95) + "..."
+                            : "No content available");
+
+                    // Get excerpt from content if title exists
+                    const excerpt =
+                        post.data.title && plainText
+                            ? plainText.substring(0, 200) + "..."
+                            : null;
+
+                    return (
+                        <article class="post">
+                            <time class="post-date">
+                                {date
+                                    .toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                    })
+                                    .toUpperCase()}
+                            </time>
+                            <h3>
+                                <a href={localUrl}>{displayTitle}</a>
+                            </h3>
+                            {excerpt && <p class="post-excerpt">{excerpt}</p>}
+                        </article>
+                    );
+                })
+            }
+        </div>
+        <div class="view-all">
+            <a href="/archive" class="archive-link"> View Full Archive → </a>
+        </div>
+    </div>
+</section>
+
+<style>
+    .blog-posts {
+        padding: var(--spacing-xl) 0;
+        background: var(--color-background);
+    }
+
+    .blog-posts h2 {
+        margin-bottom: var(--spacing-sm);
+        color: var(--color-text);
+    }
+
+    .section-intro {
+        font-size: 1.125rem;
+        margin-bottom: var(--spacing-lg);
+        max-width: 700px;
+    }
+
+    .posts-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .post {
+        padding-bottom: var(--spacing-md);
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .post:last-of-type {
+        border-bottom: none;
+    }
+
+    .post-date {
+        font-family: "Inter", sans-serif;
+        font-size: 0.875rem;
+        color: var(--color-text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .post h3 {
+        margin-top: var(--spacing-xs);
+        margin-bottom: var(--spacing-xs);
+        font-size: 1.75rem;
+    }
+
+    .post h3 a {
+        color: var(--color-text);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .post h3 a:hover {
+        color: var(--color-primary);
+    }
+
+    .post-excerpt {
+        font-size: 1.05rem;
+        line-height: 1.7;
+        margin-top: var(--spacing-xs);
+    }
+
+    .view-all {
+        text-align: center;
+        padding-top: var(--spacing-md);
+    }
+
+    .archive-link {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--color-primary);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .archive-link:hover {
+        color: var(--color-primary-dark);
+    }
+
+    @media (max-width: 768px) {
+        .post h3 {
+            font-size: 1.5rem;
+        }
+    }
+</style>

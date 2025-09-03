@@ -1,0 +1,227 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+const posts = await getCollection("blog");
+
+// Sort posts by date and group by year
+const postsByYear = posts
+    .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+    .reduce(
+        (acc, post) => {
+            const year = post.data.date.getFullYear();
+            if (!acc[year]) acc[year] = [];
+            acc[year].push(post);
+            return acc;
+        },
+        {} as Record<number, typeof posts>,
+    );
+
+const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
+---
+
+<Layout title="Blog Archive - Eric Brookfield">
+    <main class="archive">
+        <div class="container">
+            <header class="archive-header">
+                <a href="/" class="back-link">← Back to Home</a>
+                <h1>Blog Archive</h1>
+                <p class="archive-description">
+                    A collection of thoughts, notes, and musings on technology,
+                    design, and life.
+                </p>
+            </header>
+
+            <div class="posts-by-year">
+                {
+                    years.map((year) => (
+                        <section class="year-section">
+                            <h2>{year}</h2>
+                            <div class="posts-list">
+                                {postsByYear[Number(year)].map((post) => {
+                                    const date = post.data.date;
+
+                                    // Extract the URL path from the original URL or generate from slug
+                                    const urlPattern = new RegExp(
+                                        "/(\\d{4})/(\\d{2})/(\\d{2})/([^/]+)\\.html",
+                                    );
+                                    const urlMatch =
+                                        post.data.url.match(urlPattern);
+                                    const localUrl = urlMatch
+                                        ? `/${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
+                                        : `/blog/${post.slug}`;
+
+                                    // Get plain text from post body for title if needed
+                                    const plainText = post.body
+                                        .replace(/<[^>]*>/g, "")
+                                        .replace(/\n+/g, " ")
+                                        .trim();
+
+                                    // Use title if available, otherwise use first part of content
+                                    const displayTitle =
+                                        post.data.title ||
+                                        (plainText
+                                            ? plainText.substring(0, 95) + "..."
+                                            : "No content available");
+
+                                    return (
+                                        <article class="archive-post">
+                                            <time class="post-date">
+                                                {date.toLocaleDateString(
+                                                    "en-US",
+                                                    {
+                                                        month: "short",
+                                                        day: "numeric",
+                                                    },
+                                                )}
+                                            </time>
+                                            <h3>
+                                                <a href={localUrl}>
+                                                    {displayTitle}
+                                                </a>
+                                            </h3>
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    ))
+                }
+            </div>
+
+            <footer class="archive-footer">
+                <p>
+                    {posts.length} posts since {years[years.length - 1]}
+                </p>
+            </footer>
+        </div>
+    </main>
+</Layout>
+
+<style>
+    .archive {
+        padding: var(--spacing-xl) 0;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 900px;
+    }
+
+    .archive-header {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-bottom: var(--spacing-md);
+        font-family: "Inter", sans-serif;
+        font-size: 0.95rem;
+        color: var(--color-primary);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .back-link:hover {
+        color: var(--color-primary-dark);
+    }
+
+    .archive-header h1 {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-sm);
+        letter-spacing: -0.03em;
+    }
+
+    .archive-description {
+        font-size: 1.25rem;
+        color: var(--color-text-light);
+        max-width: 600px;
+    }
+
+    .posts-by-year {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .year-section {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .year-section h2 {
+        font-size: 2rem;
+        margin-bottom: var(--spacing-md);
+        color: var(--color-primary);
+        border-bottom: 2px solid var(--color-border);
+        padding-bottom: var(--spacing-xs);
+        display: inline-block;
+    }
+
+    .year-section h2::after {
+        display: none;
+    }
+
+    .posts-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .archive-post {
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: var(--spacing-md);
+        padding: var(--spacing-sm) 0;
+        align-items: baseline;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .archive-post:last-child {
+        border-bottom: none;
+    }
+
+    .post-date {
+        font-family: "Inter", sans-serif;
+        font-size: 0.875rem;
+        color: var(--color-text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .archive-post h3 {
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .archive-post h3 a {
+        color: var(--color-text);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .archive-post h3 a:hover {
+        color: var(--color-primary);
+    }
+
+    .archive-footer {
+        text-align: center;
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid var(--color-border);
+        color: var(--color-text-light);
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .archive-header h1 {
+            font-size: 2rem;
+        }
+
+        .archive-post {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-xs);
+        }
+
+        .post-date {
+            font-size: 0.8rem;
+        }
+    }
+</style>
