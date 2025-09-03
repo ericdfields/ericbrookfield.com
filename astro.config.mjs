@@ -4,6 +4,7 @@ import { remarkFixImagePaths } from "./src/utils/remark-fix-image-paths.mjs";
 
 // https://astro.build/config
 export default defineConfig({
+  site: "https://ericbrookfield.com",
   markdown: {
     remarkPlugins: [remarkFixImagePaths],
   },
