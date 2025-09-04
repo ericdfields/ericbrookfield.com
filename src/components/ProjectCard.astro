@@ -117,12 +117,27 @@ const {
     }
 
     .tag {
-        padding: 0.25rem 0.75rem;
-        background: var(--color-surface);
+        padding: 0.35rem 0.85rem;
+        background: color-mix(in srgb, var(--color-primary) 10%, transparent);
         color: var(--color-primary);
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         font-weight: 500;
         font-family: "Inter", sans-serif;
+        border-radius: 20px;
+        opacity: 0.85;
+        transition: opacity 0.2s ease;
+    }
+
+    .tag:hover {
+        opacity: 1;
+    }
+
+    [data-theme="light"] .tag {
+        opacity: 0.8;
+    }
+
+    [data-theme="light"] .tag:hover {
+        opacity: 1;
     }
 
     .project-link {

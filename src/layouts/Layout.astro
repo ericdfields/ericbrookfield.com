@@ -1,4 +1,6 @@
 ---
+import ThemeToggle from "../components/ThemeToggle.astro";
+
 export interface Props {
     title?: string;
     description?: string;
@@ -37,14 +39,33 @@ const {
             title="Eric Brookfield - JSON Feed"
             href="/feed.json"
         />
+        <script>
+            // Initialize theme immediately to prevent flash
+            (function () {
+                const theme = localStorage.getItem("theme") || "dark";
+                document.documentElement.setAttribute("data-theme", theme);
+            })();
+        </script>
     </head>
     <body>
+        <ThemeToggle />
         <slot />
     </body>
 </html>
 
 <style is:global>
     :root {
+        --max-width: 1200px;
+        --spacing-xs: 0.5rem;
+        --spacing-sm: 1rem;
+        --spacing-md: 2rem;
+        --spacing-lg: 3rem;
+        --spacing-xl: 5rem;
+    }
+
+    /* Dark theme (default) */
+    :root,
+    [data-theme="dark"] {
         --color-primary: #5a9fcc;
         --color-primary-light: #7ab4d9;
         --color-primary-lighter: #9ac8e6;
@@ -54,12 +75,19 @@ const {
         --color-background: #0a0a0a;
         --color-surface: #1a1a1a;
         --color-border: #2a2a2a;
-        --max-width: 1200px;
-        --spacing-xs: 0.5rem;
-        --spacing-sm: 1rem;
-        --spacing-md: 2rem;
-        --spacing-lg: 3rem;
-        --spacing-xl: 5rem;
+    }
+
+    /* Light theme */
+    [data-theme="light"] {
+        --color-primary: #2c5f7c;
+        --color-primary-light: #4a7b94;
+        --color-primary-lighter: #6a95ad;
+        --color-primary-dark: #1a4d6a;
+        --color-text: #1a1a1a;
+        --color-text-light: #4a4a4a;
+        --color-background: #ffffff;
+        --color-surface: #f8fafb;
+        --color-border: #e1e8ed;
     }
 
     * {
@@ -79,6 +107,9 @@ const {
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        transition:
+            background-color 0.3s ease,
+            color 0.3s ease;
     }
 
     h1,
