@@ -36,8 +36,19 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
         padding: var(--spacing-xl) 0;
         background: linear-gradient(
             135deg,
-            var(--color-surface) 0%,
-            var(--color-background) 100%
+            color-mix(
+                    in srgb,
+                    var(--color-background) 95%,
+                    var(--color-primary) 5%
+                )
+                0%,
+            var(--color-background) 50%,
+            color-mix(
+                    in srgb,
+                    var(--color-background) 98%,
+                    var(--color-accent) 2%
+                )
+                100%
         );
     }
 

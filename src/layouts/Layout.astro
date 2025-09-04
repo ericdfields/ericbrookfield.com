@@ -66,28 +66,66 @@ const {
     /* Dark theme (default) */
     :root,
     [data-theme="dark"] {
-        --color-primary: #5a9fcc;
-        --color-primary-light: #7ab4d9;
-        --color-primary-lighter: #9ac8e6;
-        --color-primary-dark: #4a8bb8;
-        --color-text: #e8e8e8;
-        --color-text-light: #b0b0b0;
-        --color-background: #0a0a0a;
-        --color-surface: #1a1a1a;
-        --color-border: #2a2a2a;
+        --color-primary: #34d399;
+        --color-primary-light: #6ee7b7;
+        --color-primary-lighter: #a7f3d0;
+        --color-primary-dark: #10b981;
+        --color-accent: #06b6d4;
+        --color-text: #f0fdf4;
+        --color-text-light: #d1fae5;
+        --color-background: #0f1f1c;
+        --color-surface: color-mix(
+            in srgb,
+            var(--color-background) 85%,
+            var(--color-primary) 15%
+        );
+        --color-surface-elevated: color-mix(
+            in srgb,
+            var(--color-background) 70%,
+            var(--color-primary) 30%
+        );
+        --color-border: color-mix(
+            in srgb,
+            var(--color-background) 90%,
+            var(--color-text) 10%
+        );
+        --color-hover: color-mix(
+            in srgb,
+            var(--color-surface) 80%,
+            var(--color-primary) 20%
+        );
     }
 
     /* Light theme */
     [data-theme="light"] {
-        --color-primary: #2c5f7c;
-        --color-primary-light: #4a7b94;
-        --color-primary-lighter: #6a95ad;
-        --color-primary-dark: #1a4d6a;
-        --color-text: #1a1a1a;
-        --color-text-light: #4a4a4a;
-        --color-background: #ffffff;
-        --color-surface: #f8fafb;
-        --color-border: #e1e8ed;
+        --color-primary: #059669;
+        --color-primary-light: #10b981;
+        --color-primary-lighter: #34d399;
+        --color-primary-dark: #047857;
+        --color-accent: #0891b2;
+        --color-text: #064e3b;
+        --color-text-light: #065f46;
+        --color-background: #f0fdf4;
+        --color-surface: color-mix(
+            in srgb,
+            var(--color-background) 90%,
+            var(--color-primary) 10%
+        );
+        --color-surface-elevated: color-mix(
+            in srgb,
+            var(--color-background) 95%,
+            var(--color-primary) 5%
+        );
+        --color-border: color-mix(
+            in srgb,
+            var(--color-background) 85%,
+            var(--color-primary) 15%
+        );
+        --color-hover: color-mix(
+            in srgb,
+            var(--color-surface) 70%,
+            var(--color-primary) 30%
+        );
     }
 
     * {
