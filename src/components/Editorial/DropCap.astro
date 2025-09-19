@@ -1,0 +1,16 @@
+---
+export interface Props {
+    text: string;
+    class?: string;
+}
+
+const { text, class: className = '' } = Astro.props;
+---
+
+<p class={`drop-cap ${className}`}>
+    {text}
+</p>
+
+<style>
+    /* Styles are inherited from editorial.css */
+</style>
