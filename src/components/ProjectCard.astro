@@ -6,6 +6,7 @@ export interface Props {
     link?: string;
     image?: string;
     featured?: boolean;
+    index?: number;
 }
 
 const {
@@ -15,10 +16,13 @@ const {
     link,
     image,
     featured = false,
+    index = 0,
 } = Astro.props;
+
+const accentColor = index % 2 === 0 ? 'orange' : 'teal';
 ---
 
-<article class={`project-card ${featured ? "featured" : ""}`}>
+<article class={`project-card ${featured ? "featured" : ""} accent-${accentColor}`}>
     {
         image && (
             <div class="project-image">
@@ -55,7 +59,7 @@ const {
 
 <style>
     .project-card {
-        background: var(--color-surface);
+        background: var(--color-background);
         border: 1px solid var(--color-border);
         overflow: hidden;
         transition: all 0.3s ease;
@@ -66,8 +70,15 @@ const {
 
     .project-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(90, 159, 204, 0.15);
-        border-color: var(--color-primary-light);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .project-card.accent-orange:hover {
+        border-color: var(--color-primary);
+    }
+
+    .project-card.accent-teal:hover {
+        border-color: var(--color-secondary);
     }
 
     .project-card.featured {
@@ -102,11 +113,17 @@ const {
     .project-content h3 {
         margin-bottom: var(--spacing-sm);
         color: var(--color-text);
+        font-family: "Space Grotesk", sans-serif;
+    }
+
+    .project-content h3::after {
+        display: none;
     }
 
     .project-content p {
         margin-bottom: var(--spacing-sm);
         flex: 1;
+        color: var(--color-text-light);
     }
 
     .tags {
@@ -116,40 +133,43 @@ const {
         margin-bottom: var(--spacing-sm);
     }
 
+    .accent-orange .tag {
+        background: rgba(224, 122, 61, 0.15);
+        color: var(--color-primary);
+    }
+
+    .accent-teal .tag {
+        background: rgba(26, 95, 90, 0.15);
+        color: var(--color-secondary);
+    }
+
     .tag {
         padding: 0.35rem 0.85rem;
-        background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-        color: var(--color-primary);
         font-size: 0.8rem;
         font-weight: 500;
         font-family: "Inter", sans-serif;
-        border-radius: 20px;
-        opacity: 0.85;
+        border-radius: 2px;
         transition: opacity 0.2s ease;
-    }
-
-    .tag:hover {
-        opacity: 1;
-    }
-
-    [data-theme="light"] .tag {
-        opacity: 0.8;
-    }
-
-    [data-theme="light"] .tag:hover {
-        opacity: 1;
     }
 
     .project-link {
         display: inline-flex;
         align-items: center;
-        font-weight: 500;
-        color: var(--color-primary);
+        font-weight: 600;
+        font-family: "Inter", sans-serif;
         margin-top: auto;
     }
 
+    .accent-orange .project-link {
+        color: var(--color-primary);
+    }
+
+    .accent-teal .project-link {
+        color: var(--color-secondary);
+    }
+
     .project-link:hover {
-        color: var(--color-primary-dark);
+        opacity: 0.8;
     }
 
     @media (max-width: 768px) {
