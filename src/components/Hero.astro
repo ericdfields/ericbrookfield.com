@@ -36,25 +36,6 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
         </g>
     </svg>
 
-    <!-- Duotone filter definition -->
-    <svg class="filters" aria-hidden="true">
-        <defs>
-            <filter id="duotone">
-                <feColorMatrix type="matrix" values="
-                    0.3 0.3 0.3 0 0
-                    0.3 0.3 0.3 0 0
-                    0.3 0.3 0.3 0 0
-                    0   0   0   1 0
-                " />
-                <feComponentTransfer>
-                    <feFuncR type="table" tableValues="0.102 0.878" />
-                    <feFuncG type="table" tableValues="0.373 0.478" />
-                    <feFuncB type="table" tableValues="0.353 0.243" />
-                </feComponentTransfer>
-            </filter>
-        </defs>
-    </svg>
-
     <div class="container">
         <div class="hero-content">
             <div class="hero-text">
@@ -104,14 +85,6 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
 
     :global([data-theme="light"]) .topo-bg {
         opacity: 0.4;
-    }
-
-    /* Hidden filter definitions */
-    .filters {
-        position: absolute;
-        width: 0;
-        height: 0;
-        overflow: hidden;
     }
 
     .hero-content {
@@ -184,6 +157,7 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
     }
 
     .hero-image {
+        position: relative;
         width: 260px;
         height: 260px;
         border-radius: 50%;
@@ -192,11 +166,20 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
         animation: fadeInUp 1s ease-out 0.2s backwards;
     }
 
+    .hero-image::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--color-secondary);
+        opacity: 0.15;
+        mix-blend-mode: multiply;
+        pointer-events: none;
+    }
+
     .hero-image img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        filter: url(#duotone);
     }
 
     @keyframes fadeInUp {
