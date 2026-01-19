@@ -3,25 +3,55 @@ import ProjectCard from "./ProjectCard.astro";
 
 const projects = [
     {
-        title: "VennDgram",
+        title: "Patient Data Platform",
         description:
-            "An interactive Venn diagram editor with a daily challenge component. Create, share, and solve visual logic puzzles.",
-        tags: ["Product Design", "Full-Stack", "Interactive"],
-        link: "https://github.com/ericdfields/venndgram",
+            "Architected a Rails 8 system managing sensitive patient records, automated pharmacy data imports, and real-time analytics. Handles encrypted FTP pipelines from major specialty pharmacies with role-based access control.",
+        tags: ["Rails", "Healthcare", "Data Pipelines"],
         featured: true,
     },
     {
-        title: "Devin Bramhall Portfolio",
+        title: "Territory Management System",
         description:
-            "Collaborated on design and development for a professional portfolio showcasing creative work and projects.",
-        tags: ["Web Design", "Development", "Collaboration"],
-        link: "https://devinbramhall.com",
+            "Built a comprehensive platform managing 375+ sales territories across multiple therapeutic divisions. Features automated transfer scheduling, coverage analytics, and change audit trails.",
+        tags: ["Rails", "Enterprise", "Analytics"],
     },
     {
-        title: "Enterprise CRM Platform",
+        title: "R&D Pipeline Visualizer",
         description:
-            "Built and led development of flexible CRM solutions serving healthcare professionals, clinical trials, and pharmaceutical sales teams. Integrated with multiple third-party vendors and ETL pipelines.",
-        tags: ["Enterprise", "Healthcare", "Team Leadership"],
+            "Interactive Vue/TypeScript dashboard tracking drug development from preclinical through approval. Embeddable widget with multiple visualization modes and automated screenshot generation.",
+        tags: ["Vue", "TypeScript", "Data Viz"],
+    },
+    {
+        title: "Clinical Trial Platform",
+        description:
+            "Multi-tenant Rails application for clinical trial respondent management. Includes timestamped verification code generation, admin dashboards, and comprehensive E2E test coverage.",
+        tags: ["Rails", "React", "Clinical"],
+    },
+    {
+        title: "Multi-Market Brand Sites",
+        description:
+            "Developed and maintained 12+ regulatory-compliant pharmaceutical websites across US, Canada, Germany, and Austria. HLS video streaming, localization, and CRM integrations.",
+        tags: ["Vite", "Vue", "i18n"],
+    },
+    {
+        title: "Call Recording Analytics",
+        description:
+            "Node.js system for bulk retrieval and organization of Twilio call recordings. SQLite-backed querying with Excel report generation for patient communication analysis.",
+        tags: ["Node.js", "Twilio", "Analytics"],
+    },
+    {
+        title: "Podcast RAG System",
+        description:
+            "Personal project: semantic search across 470+ podcast episodes using ChromaDB vectors and Claude AI. Web interface with episode citations and session management.",
+        tags: ["Python", "FastAPI", "AI/ML"],
+        link: "https://github.com/ericdfields/roderickon",
+    },
+    {
+        title: "VennDgram",
+        description:
+            "Interactive Venn diagram editor with daily puzzle challenges. Create, share, and solve visual logic puzzles.",
+        tags: ["Full-Stack", "Interactive", "Games"],
+        link: "https://github.com/ericdfields/venndgram",
     },
 ];
 ---
