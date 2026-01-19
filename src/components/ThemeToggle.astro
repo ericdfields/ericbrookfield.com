@@ -60,7 +60,7 @@
         padding: 0;
     }
 
-    [data-theme="light"] .theme-toggle {
+    :global([data-theme="light"]) .theme-toggle {
         border-color: var(--color-border);
     }
 
@@ -79,8 +79,8 @@
         transition: all 0.3s ease;
     }
 
-    [data-theme="light"] .theme-toggle svg {
-        color: var(--color-text-light);
+    :global([data-theme="light"]) .theme-toggle svg {
+        color: var(--color-text);
     }
 
     .sun-icon {
