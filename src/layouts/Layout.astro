@@ -24,7 +24,7 @@ const {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap"
             rel="stylesheet"
         />
         <link
@@ -61,71 +61,49 @@ const {
         --spacing-md: 2rem;
         --spacing-lg: 3rem;
         --spacing-xl: 5rem;
+
+        /* Type scale */
+        --text-hero: clamp(3.5rem, 10vw, 6rem);
+        --text-h1: clamp(2.5rem, 6vw, 4rem);
+        --text-h2: clamp(1.75rem, 4vw, 2.5rem);
+        --text-h3: 1.25rem;
+        --text-body: 1.125rem;
+        --text-small: 0.875rem;
     }
 
     /* Dark theme (default) */
     :root,
     [data-theme="dark"] {
-        --color-primary: #34d399;
-        --color-primary-light: #6ee7b7;
-        --color-primary-lighter: #a7f3d0;
-        --color-primary-dark: #10b981;
-        --color-accent: #06b6d4;
-        --color-text: #f0fdf4;
-        --color-text-light: #d1fae5;
-        --color-background: #0f1f1c;
-        --color-surface: color-mix(
-            in srgb,
-            var(--color-background) 85%,
-            var(--color-primary) 15%
-        );
-        --color-surface-elevated: color-mix(
-            in srgb,
-            var(--color-background) 70%,
-            var(--color-primary) 30%
-        );
-        --color-border: color-mix(
-            in srgb,
-            var(--color-background) 90%,
-            var(--color-text) 10%
-        );
-        --color-hover: color-mix(
-            in srgb,
-            var(--color-surface) 80%,
-            var(--color-primary) 20%
-        );
+        --color-primary: #E07A3D;
+        --color-primary-light: #E8956A;
+        --color-primary-dark: #C66A2F;
+        --color-secondary: #1A5F5A;
+        --color-secondary-light: #2A7A74;
+        --color-accent: #E07A3D;
+        --color-text: #F5F0E8;
+        --color-text-light: #9CA3AF;
+        --color-background: #0D1117;
+        --color-surface: #161B22;
+        --color-surface-elevated: #1C2128;
+        --color-border: rgba(255, 255, 255, 0.1);
+        --color-hover: rgba(224, 122, 61, 0.1);
     }
 
     /* Light theme */
     [data-theme="light"] {
-        --color-primary: #059669;
-        --color-primary-light: #10b981;
-        --color-primary-lighter: #34d399;
-        --color-primary-dark: #047857;
-        --color-accent: #0891b2;
-        --color-text: #064e3b;
-        --color-text-light: #065f46;
-        --color-background: #f0fdf4;
-        --color-surface: color-mix(
-            in srgb,
-            var(--color-background) 90%,
-            var(--color-primary) 10%
-        );
-        --color-surface-elevated: color-mix(
-            in srgb,
-            var(--color-background) 95%,
-            var(--color-primary) 5%
-        );
-        --color-border: color-mix(
-            in srgb,
-            var(--color-background) 85%,
-            var(--color-primary) 15%
-        );
-        --color-hover: color-mix(
-            in srgb,
-            var(--color-surface) 70%,
-            var(--color-primary) 30%
-        );
+        --color-primary: #E07A3D;
+        --color-primary-light: #E8956A;
+        --color-primary-dark: #C66A2F;
+        --color-secondary: #1A5F5A;
+        --color-secondary-light: #2A7A74;
+        --color-accent: #E07A3D;
+        --color-text: #1A2B2A;
+        --color-text-light: #5C6B6A;
+        --color-background: #FAF7F2;
+        --color-surface: #FFFFFF;
+        --color-surface-elevated: #FFFFFF;
+        --color-border: rgba(26, 95, 90, 0.15);
+        --color-hover: rgba(224, 122, 61, 0.1);
     }
 
     * {
@@ -139,10 +117,11 @@ const {
         margin: 0;
         width: 100%;
         min-height: 100%;
-        font-family: "Crimson Text", Georgia, serif;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: var(--text-body);
         color: var(--color-text);
         background-color: var(--color-background);
-        line-height: 1.6;
+        line-height: 1.7;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         transition:
@@ -156,20 +135,18 @@ const {
     h4,
     h5,
     h6 {
-        font-family: "Crimson Text", Georgia, serif;
+        font-family: "Space Grotesk", sans-serif;
         line-height: 1.2;
         font-weight: 700;
         letter-spacing: -0.02em;
     }
 
     h1 {
-        font-size: 3rem;
-        font-weight: 700;
-        letter-spacing: -0.03em;
+        font-size: var(--text-h1);
     }
 
     h2 {
-        font-size: 2.25rem;
+        font-size: var(--text-h2);
         position: relative;
         display: inline-block;
     }
@@ -179,13 +156,13 @@ const {
         position: absolute;
         bottom: -8px;
         left: 0;
-        width: 60px;
+        width: 40px;
         height: 3px;
-        background: var(--color-primary);
+        background: var(--color-secondary);
     }
 
     h3 {
-        font-size: 1.5rem;
+        font-size: var(--text-h3);
         font-weight: 600;
     }
 
