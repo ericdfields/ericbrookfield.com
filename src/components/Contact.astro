@@ -20,6 +20,7 @@ const contactMethods = [
 
 <section class="contact">
     <div class="container">
+        <span class="chapter-label">Get In Touch</span>
         <h2>Let's Connect</h2>
         <p class="section-intro">
             I'm always interested in discussing new opportunities, interesting
@@ -46,25 +47,47 @@ const contactMethods = [
 <style>
     .contact {
         padding: var(--spacing-xl) 0;
-        background: var(--color-surface);
+        background: var(--color-secondary);
         text-align: center;
+    }
+
+    [data-theme="light"] .contact {
+        background: var(--color-surface);
+    }
+
+    .contact .chapter-label {
+        color: var(--color-primary);
+        margin-bottom: 0.5rem;
     }
 
     .contact h2 {
         margin-bottom: var(--spacing-sm);
+        color: #F5F0E8;
+    }
+
+    .contact h2::after {
+        background: var(--color-primary);
+    }
+
+    [data-theme="light"] .contact h2 {
         color: var(--color-text);
     }
 
     .section-intro {
-        font-size: 1.125rem;
+        font-size: var(--text-body);
         margin: 0 auto var(--spacing-lg);
         max-width: 600px;
+        color: rgba(245, 240, 232, 0.8);
+    }
+
+    [data-theme="light"] .section-intro {
+        color: var(--color-text-light);
     }
 
     .contact-methods {
         display: flex;
         justify-content: center;
-        gap: var(--spacing-lg);
+        gap: var(--spacing-md);
         flex-wrap: wrap;
     }
 
@@ -72,22 +95,27 @@ const contactMethods = [
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: var(--spacing-md);
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         min-width: 200px;
         transition: all 0.3s ease;
     }
 
+    [data-theme="light"] .contact-method {
+        background: var(--color-background);
+        border-color: var(--color-border);
+    }
+
     .contact-method:hover {
         transform: translateY(-2px);
-        border-color: var(--color-primary-light);
-        box-shadow: 0 8px 16px rgba(90, 159, 204, 0.15);
+        border-color: var(--color-primary);
+        background: rgba(224, 122, 61, 0.1);
     }
 
     .contact-method .label {
         font-family: "Inter", sans-serif;
-        font-size: 0.875rem;
+        font-size: var(--text-small);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -96,8 +124,12 @@ const contactMethods = [
     }
 
     .contact-method .value {
-        color: var(--color-text-light);
+        color: #F5F0E8;
         font-size: 0.95rem;
+    }
+
+    [data-theme="light"] .contact-method .value {
+        color: var(--color-text);
     }
 
     @media (max-width: 768px) {
