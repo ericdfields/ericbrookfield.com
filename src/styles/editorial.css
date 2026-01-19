@@ -131,7 +131,7 @@
 
 /* Bylines */
 .byline {
-    font-size: var(--text-sm);
+    font-size: var(--text-small);
     color: var(--editorial-gray);
     display: flex;
     gap: 1rem;
@@ -298,7 +298,7 @@
     display: flex;
     gap: 2rem;
     flex-wrap: wrap;
-    font-size: var(--text-sm);
+    font-size: var(--text-small);
     color: var(--editorial-gray);
     margin-top: 1rem;
 }
@@ -350,7 +350,7 @@
     }
 
     .pull-quote {
-        font-size: var(--text-2xl);
+        font-size: 1.5rem;
         padding: 1.5rem;
     }
 
@@ -360,6 +360,6 @@
     }
 
     .stat-number {
-        font-size: var(--text-4xl);
+        font-size: 2rem;
     }
 }
