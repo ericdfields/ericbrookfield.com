@@ -12,6 +12,49 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
 ---
 
 <section class="hero">
+    <!-- Topographic contour lines background -->
+    <svg class="topo-bg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+            <linearGradient id="topoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--color-primary)" stop-opacity="0.15" />
+                <stop offset="100%" stop-color="var(--color-secondary)" stop-opacity="0.08" />
+            </linearGradient>
+        </defs>
+        <g fill="none" stroke="url(#topoGradient)" stroke-width="1.5">
+            <!-- Flowing contour lines -->
+            <path d="M-50,150 Q150,100 300,180 T600,120 T900,200" />
+            <path d="M-50,200 Q200,150 350,230 T650,170 T950,250" />
+            <path d="M-50,260 Q180,220 320,290 T620,240 T920,310" />
+            <path d="M-50,330 Q220,280 380,350 T680,300 T980,380" />
+            <path d="M-50,400 Q160,360 340,420 T640,380 T940,450" />
+            <path d="M-50,470 Q200,430 360,490 T700,440 T1000,520" />
+            <path d="M-50,540 Q180,510 330,560 T660,520 T960,590" />
+            <!-- Additional organic curves -->
+            <path d="M600,0 Q650,150 580,300 T620,500 T700,650" stroke-opacity="0.12" />
+            <path d="M700,0 Q720,180 660,350 T700,550 T780,700" stroke-opacity="0.1" />
+            <path d="M500,0 Q580,120 520,280 T560,480 T620,650" stroke-opacity="0.08" />
+        </g>
+    </svg>
+
+    <!-- Duotone filter definition -->
+    <svg class="filters" aria-hidden="true">
+        <defs>
+            <filter id="duotone">
+                <feColorMatrix type="matrix" values="
+                    0.3 0.3 0.3 0 0
+                    0.3 0.3 0.3 0 0
+                    0.3 0.3 0.3 0 0
+                    0   0   0   1 0
+                " />
+                <feComponentTransfer>
+                    <feFuncR type="table" tableValues="0.102 0.878" />
+                    <feFuncG type="table" tableValues="0.373 0.478" />
+                    <feFuncB type="table" tableValues="0.353 0.243" />
+                </feComponentTransfer>
+            </filter>
+        </defs>
+    </svg>
+
     <div class="container">
         <div class="hero-content">
             <div class="hero-text">
@@ -40,10 +83,35 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
     .hero {
         padding: var(--spacing-xl) 0;
         background: var(--color-secondary);
+        position: relative;
+        overflow: hidden;
     }
 
     :global([data-theme="light"]) .hero {
         background: var(--color-background);
+    }
+
+    /* Topographic background */
+    .topo-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        opacity: 0.6;
+    }
+
+    :global([data-theme="light"]) .topo-bg {
+        opacity: 0.4;
+    }
+
+    /* Hidden filter definitions */
+    .filters {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
     }
 
     .hero-content {
@@ -128,6 +196,7 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
         width: 100%;
         height: 100%;
         object-fit: cover;
+        filter: url(#duotone);
     }
 
     @keyframes fadeInUp {
