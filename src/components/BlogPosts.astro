@@ -11,8 +11,8 @@ const sortedPosts = posts
 <section class="blog-posts">
     <div class="container">
         <span class="chapter-label">Recent Writing</span>
-        <h2 class="headline headline-md">Words & Thoughts</h2>
-        <p class="section-intro lead-text">
+        <h2>Words & Thoughts</h2>
+        <p class="section-intro">
             Thoughts on technology, design, and the craft of building digital
             products.
         </p>
@@ -50,9 +50,9 @@ const sortedPosts = posts
                             : null;
 
                     return (
-                        <article class="post timeline-item">
+                        <article class="post">
                             <div class="post-content">
-                                <time class="post-date time">
+                                <time class="post-date">
                                     {date
                                         .toLocaleDateString("en-US", {
                                             year: "numeric",
@@ -91,41 +91,39 @@ const sortedPosts = posts
         animation: fadeInUp 0.6s ease-out;
     }
 
-    .blog-posts .headline {
+    .blog-posts h2 {
         margin-bottom: var(--spacing-sm);
         color: var(--color-text);
         animation: fadeInUp 0.8s ease-out 0.1s backwards;
     }
 
     .section-intro {
+        font-size: var(--text-body);
         margin-bottom: var(--spacing-lg);
         max-width: 700px;
         animation: fadeInUp 1s ease-out 0.2s backwards;
-        font-family: "Inter", sans-serif;
+        color: var(--color-text-light);
     }
 
     .posts-list {
         display: flex;
         flex-direction: column;
-        gap: var(--spacing-md);
         margin-bottom: var(--spacing-lg);
     }
 
     .post {
         padding: 1.5rem 0;
-        border-bottom: 1px solid var(--editorial-border, var(--color-border));
+        border-bottom: 1px solid var(--color-border);
         transition: all 0.3s ease;
-        animation: fadeInUp 0.8s ease-out;
-        animation-delay: calc(0.3s + var(--index, 0) * 0.1s);
-        animation-fill-mode: backwards;
     }
 
     .post:hover {
+        background: var(--color-hover);
         padding-left: 1rem;
-        background: var(--editorial-surface, var(--color-surface));
         margin-left: -1rem;
         margin-right: -1rem;
         padding-right: 1rem;
+        border-left: 3px solid var(--color-secondary);
     }
 
     .post:last-of-type {
@@ -140,7 +138,7 @@ const sortedPosts = posts
 
     .post-date {
         font-family: "Inter", sans-serif;
-        font-size: 0.875rem;
+        font-size: var(--text-small);
         font-weight: 600;
         color: var(--color-primary);
         text-transform: uppercase;
@@ -155,10 +153,14 @@ const sortedPosts = posts
 
     .post h3 {
         margin-bottom: var(--spacing-xs);
-        font-family: "Playfair Display", "Crimson Text", serif;
-        font-size: 1.875rem;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: var(--text-h2);
         font-weight: 700;
         line-height: 1.2;
+    }
+
+    .post h3::after {
+        display: none;
     }
 
     .post h3 a {
@@ -176,8 +178,8 @@ const sortedPosts = posts
         font-size: 1rem;
         line-height: 1.7;
         margin-top: var(--spacing-xs);
-        color: var(--editorial-gray, var(--color-text-light));
-        font-weight: 300;
+        color: var(--color-text-light);
+        font-weight: 400;
     }
 
     .view-all {
@@ -187,8 +189,8 @@ const sortedPosts = posts
 
     .archive-link {
         font-family: "Inter", sans-serif;
-        font-size: 1.1rem;
-        font-weight: 500;
+        font-size: 1rem;
+        font-weight: 600;
         color: var(--color-primary);
         text-decoration: none;
         transition: all 0.2s ease;
@@ -198,7 +200,6 @@ const sortedPosts = posts
 
     .archive-link:hover {
         color: var(--color-primary-dark);
-        transform: translateX(4px);
     }
 
     .archive-link::after {
@@ -217,6 +218,17 @@ const sortedPosts = posts
         transform: scaleX(1);
     }
 
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     @media (max-width: 768px) {
         .post-content {
             flex-direction: column;
@@ -232,8 +244,8 @@ const sortedPosts = posts
         }
 
         .post:hover {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
         }
     }
 </style>
