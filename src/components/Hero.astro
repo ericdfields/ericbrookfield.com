@@ -42,7 +42,7 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
         background: var(--color-secondary);
     }
 
-    [data-theme="light"] .hero {
+    :global([data-theme="light"]) .hero {
         background: var(--color-background);
     }
 
@@ -64,7 +64,7 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
         animation: fadeInUp 0.8s ease-out 0.1s backwards;
     }
 
-    [data-theme="light"] .hero-text .headline {
+    :global([data-theme="light"]) .hero-text .headline {
         color: var(--color-secondary);
     }
 
@@ -83,7 +83,7 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
         color: var(--editorial-cream);
     }
 
-    [data-theme="light"] .title {
+    :global([data-theme="light"]) .title {
         color: var(--color-text);
     }
 
@@ -98,7 +98,7 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
         color: var(--color-text-light);
     }
 
-    [data-theme="light"] .location {
+    :global([data-theme="light"]) .location {
         color: var(--color-text);
     }
 
@@ -111,7 +111,7 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
         animation: fadeInUp 1.2s ease-out 0.3s backwards;
     }
 
-    [data-theme="light"] .bio {
+    :global([data-theme="light"]) .bio {
         color: var(--color-text);
     }
 
