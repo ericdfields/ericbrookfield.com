@@ -38,14 +38,15 @@ const skillCategories = [
 
 <section class="skills">
   <div class="container">
-    <h2>Expertise</h2>
+    <span class="chapter-label">Core Expertise</span>
+    <h2>Skills</h2>
     <p class="section-intro">
       15+ years of experience bridging the gap between design and engineering,
       with deep expertise in building and scaling digital products.
     </p>
     <div class="skills-grid">
-      {skillCategories.map(category => (
-        <div class="skill-category">
+      {skillCategories.map((category, index) => (
+        <div class={`skill-category accent-${index % 2 === 0 ? 'orange' : 'teal'}`}>
           <h3>{category.title}</h3>
           <ul>
             {category.skills.map(skill => (
@@ -64,15 +65,20 @@ const skillCategories = [
     background: var(--color-background);
   }
 
+  .skills .chapter-label {
+    margin-bottom: 0.5rem;
+  }
+
   .skills h2 {
     margin-bottom: var(--spacing-sm);
     color: var(--color-text);
   }
 
   .section-intro {
-    font-size: 1.125rem;
+    font-size: var(--text-body);
     margin-bottom: var(--spacing-lg);
     max-width: 700px;
+    color: var(--color-text-light);
   }
 
   .skills-grid {
@@ -88,9 +94,21 @@ const skillCategories = [
   }
 
   .skill-category h3 {
-    color: var(--color-primary);
     margin-bottom: var(--spacing-md);
-    font-size: 1.25rem;
+    font-size: var(--text-h3);
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  .skill-category h3::after {
+    display: none;
+  }
+
+  .skill-category.accent-orange h3 {
+    color: var(--color-primary);
+  }
+
+  .skill-category.accent-teal h3 {
+    color: var(--color-secondary);
   }
 
   .skill-category ul {
@@ -104,11 +122,19 @@ const skillCategories = [
     padding-left: 1.5rem;
   }
 
-  .skill-category li::before {
+  .skill-category.accent-orange li::before {
     content: "—";
     position: absolute;
     left: 0;
-    color: var(--color-primary-light);
+    color: var(--color-primary);
+    font-weight: 400;
+  }
+
+  .skill-category.accent-teal li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    color: var(--color-secondary);
     font-weight: 400;
   }
 
