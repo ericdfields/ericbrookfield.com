@@ -257,6 +257,26 @@
     color: var(--editorial-gray);
 }
 
+/* Horizontal Rules */
+hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--color-secondary) 20%,
+        var(--color-primary) 50%,
+        var(--color-secondary) 80%,
+        transparent
+    );
+    margin: 3rem 0;
+    opacity: 0.6;
+}
+
+[data-theme="light"] hr {
+    opacity: 0.4;
+}
+
 /* Editorial Grid */
 .editorial-grid {
     display: grid;
