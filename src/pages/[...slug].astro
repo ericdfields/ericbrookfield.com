@@ -16,12 +16,12 @@ export async function getStaticPaths() {
 
         return {
             params: { slug },
-            props: { post },
+            props: { post, slug },
         };
     });
 }
 
-const { post } = Astro.props;
+const { post, slug } = Astro.props;
 const { Content } = await post.render();
 const date = post.data.date;
 
@@ -43,7 +43,7 @@ const processedContent = post.body.replace(
 );
 ---
 
-<Layout title={displayTitle}>
+<Layout title={displayTitle} ogImage={`/og/${slug}.png`}>
     <article class="blog-post">
         <div class="container">
             <header class="post-header">
