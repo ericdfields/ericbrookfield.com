@@ -186,6 +186,25 @@ const processedContent = post.body.replace(
         display: block;
     }
 
+    :global(.post-content hr) {
+        border: none;
+        height: 1px;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            var(--color-secondary) 20%,
+            var(--color-primary) 50%,
+            var(--color-secondary) 80%,
+            transparent
+        );
+        margin: var(--spacing-lg) 0;
+        opacity: 0.6;
+    }
+
+    :global([data-theme="light"] .post-content hr) {
+        opacity: 0.4;
+    }
+
     .post-footer {
         padding-top: var(--spacing-lg);
         border-top: 1px solid var(--color-border);
