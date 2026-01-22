@@ -57,6 +57,10 @@ const projects = [
 ---
 
 <section class="projects">
+    <!-- Animated gradient blobs -->
+    <div class="blob blob-1" aria-hidden="true"></div>
+    <div class="blob blob-2" aria-hidden="true"></div>
+
     <div class="container">
         <span class="chapter-label">Selected Work</span>
         <h2>Projects</h2>
@@ -74,6 +78,68 @@ const projects = [
     .projects {
         padding: var(--spacing-xl) 0;
         background: var(--color-surface);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.15;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .blob-1 {
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, var(--color-primary) 0%, transparent 70%);
+        top: -100px;
+        right: -150px;
+        animation: float1 20s ease-in-out infinite;
+    }
+
+    .blob-2 {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, var(--color-secondary) 0%, transparent 70%);
+        bottom: -100px;
+        left: -100px;
+        animation: float2 25s ease-in-out infinite;
+    }
+
+    :global([data-theme="light"]) .blob {
+        opacity: 0.1;
+    }
+
+    @keyframes float1 {
+        0%, 100% {
+            transform: translate(0, 0) scale(1);
+        }
+        33% {
+            transform: translate(-30px, 40px) scale(1.1);
+        }
+        66% {
+            transform: translate(20px, -20px) scale(0.95);
+        }
+    }
+
+    @keyframes float2 {
+        0%, 100% {
+            transform: translate(0, 0) scale(1);
+        }
+        33% {
+            transform: translate(40px, -30px) scale(1.05);
+        }
+        66% {
+            transform: translate(-20px, 30px) scale(1.1);
+        }
+    }
+
+    .container {
+        position: relative;
+        z-index: 1;
     }
 
     .projects .chapter-label {

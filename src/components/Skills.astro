@@ -37,6 +37,9 @@ const skillCategories = [
 ---
 
 <section class="skills">
+  <!-- Animated gradient blob -->
+  <div class="blob blob-skills" aria-hidden="true"></div>
+
   <div class="container">
     <span class="chapter-label">Core Expertise</span>
     <h2>Skills</h2>
@@ -63,6 +66,42 @@ const skillCategories = [
   .skills {
     padding: var(--spacing-xl) 0;
     background: var(--color-background);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .blob-skills {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--color-secondary) 0%, transparent 70%);
+    filter: blur(100px);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 15s ease-in-out infinite;
+  }
+
+  :global([data-theme="light"]) .blob-skills {
+    opacity: 0.08;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
   }
 
   .skills .chapter-label {
