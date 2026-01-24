@@ -59,10 +59,18 @@ const ogImageUrl = ogImage ? `${siteUrl}${ogImage}` : `${siteUrl}/og-default.png
             href="/feed.json"
         />
         <script>
-            // Initialize theme immediately to prevent flash
+            // Initialize theme and synth settings immediately to prevent flash
             (function () {
+                const root = document.documentElement;
+
+                // Theme
                 const theme = localStorage.getItem("theme") || "dark";
-                document.documentElement.setAttribute("data-theme", theme);
+                root.setAttribute("data-theme", theme);
+
+                // Synth controls
+                root.style.setProperty('--synth-temp', localStorage.getItem('synth-temperature') ?? '50');
+                root.style.setProperty('--synth-glow', localStorage.getItem('synth-glow') ?? '40');
+                root.style.setProperty('--synth-noise', localStorage.getItem('synth-noise') ?? '0');
             })();
         </script>
     </head>
