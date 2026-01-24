@@ -207,3 +207,203 @@ import ArcControl from "./ArcControl.astro";
         }
     }
 </style>
+
+<script>
+    // State
+    const state = {
+        temperature: parseInt(localStorage.getItem('synth-temperature') ?? '50'),
+        glow: parseInt(localStorage.getItem('synth-glow') ?? '40'),
+        noise: parseInt(localStorage.getItem('synth-noise') ?? '0'),
+        interacted: localStorage.getItem('synth-interacted') === 'true',
+        isOpen: false
+    };
+
+    // Elements
+    const panel = document.getElementById('controlPanel');
+    const toggle = document.getElementById('controlToggle');
+    const drawer = document.getElementById('controlDrawer');
+    const themeToggle = document.getElementById('themeToggleInner');
+    const resetBtn = document.getElementById('resetControls');
+
+    // Pulse animation if not interacted
+    if (!state.interacted && toggle) {
+        toggle.classList.add('pulse');
+    }
+
+    // Toggle drawer
+    toggle?.addEventListener('click', () => {
+        state.isOpen = !state.isOpen;
+        drawer?.classList.toggle('open', state.isOpen);
+        toggle.setAttribute('aria-expanded', String(state.isOpen));
+
+        if (!state.interacted) {
+            state.interacted = true;
+            localStorage.setItem('synth-interacted', 'true');
+            toggle.classList.remove('pulse');
+        }
+    });
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (state.isOpen && panel && !panel.contains(e.target as Node)) {
+            state.isOpen = false;
+            drawer?.classList.remove('open');
+            toggle?.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // Theme toggle
+    themeToggle?.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = current === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    });
+
+    // Reset controls
+    resetBtn?.addEventListener('click', () => {
+        state.temperature = 50;
+        state.glow = 40;
+        state.noise = 0;
+
+        updateCSS('temperature', 50);
+        updateCSS('glow', 40);
+        updateCSS('noise', 0);
+
+        localStorage.setItem('synth-temperature', '50');
+        localStorage.setItem('synth-glow', '40');
+        localStorage.setItem('synth-noise', '0');
+
+        // Update arc visuals
+        updateArcVisual('temperature', 50);
+        updateArcVisual('glow', 40);
+        updateArcVisual('noise', 0);
+    });
+
+    // Arc control interaction
+    const arcControls = document.querySelectorAll('.arc-control');
+
+    arcControls.forEach(control => {
+        const id = control.getAttribute('data-id');
+        const min = parseInt(control.getAttribute('data-min') || '0');
+        const max = parseInt(control.getAttribute('data-max') || '100');
+        const defaultVal = parseInt(control.getAttribute('data-default') || '50');
+
+        // Initialize visual
+        const initial = id ? (state as any)[id] ?? defaultVal : defaultVal;
+        updateArcVisual(id!, initial);
+
+        let isDragging = false;
+
+        const handleMove = (clientX: number, clientY: number) => {
+            if (!isDragging) return;
+
+            const svg = control.querySelector('.arc-svg');
+            if (!svg) return;
+
+            const rect = svg.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.bottom;
+
+            // Calculate angle from center to pointer
+            const angle = Math.atan2(centerY - clientY, clientX - centerX);
+
+            // Map angle (PI to 0) to value (0 to 100)
+            let normalized = (Math.PI - angle) / Math.PI;
+            normalized = Math.max(0, Math.min(1, normalized));
+            const value = Math.round(min + normalized * (max - min));
+
+            updateArcVisual(id!, value);
+            updateCSS(id!, value);
+            (state as any)[id!] = value;
+        };
+
+        const handleEnd = () => {
+            if (isDragging && id) {
+                isDragging = false;
+                const key = id === 'temperature' ? 'synth-temperature' :
+                            id === 'glow' ? 'synth-glow' : 'synth-noise';
+                localStorage.setItem(key, String((state as any)[id]));
+            }
+        };
+
+        control.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            handleMove((e as MouseEvent).clientX, (e as MouseEvent).clientY);
+        });
+
+        control.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            const touch = (e as TouchEvent).touches[0];
+            handleMove(touch.clientX, touch.clientY);
+        }, { passive: true });
+
+        document.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+        document.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            handleMove(touch.clientX, touch.clientY);
+        }, { passive: true });
+
+        document.addEventListener('mouseup', handleEnd);
+        document.addEventListener('touchend', handleEnd);
+    });
+
+    function updateArcVisual(id: string, value: number) {
+        const control = document.querySelector(`[data-id="${id}"]`);
+        if (!control) return;
+
+        const min = parseInt(control.getAttribute('data-min') || '0');
+        const max = parseInt(control.getAttribute('data-max') || '100');
+        const normalized = (value - min) / (max - min);
+
+        const arcPath = control.querySelector('.arc-value') as SVGPathElement;
+        const dot = control.querySelector('.arc-dot') as SVGCircleElement;
+
+        if (arcPath) {
+            // Arc length is ~78.5 (half circle with r=25)
+            const dashOffset = 78.5 * (1 - normalized);
+            arcPath.style.strokeDashoffset = String(dashOffset);
+        }
+
+        if (dot) {
+            // Calculate dot position along arc
+            const angle = Math.PI - (normalized * Math.PI);
+            const cx = 30 + 25 * Math.cos(angle);
+            const cy = 35 - 25 * Math.sin(angle);
+            dot.setAttribute('cx', String(cx));
+            dot.setAttribute('cy', String(cy));
+        }
+    }
+
+    function updateCSS(id: string, value: number) {
+        const root = document.documentElement;
+        const varName = id === 'temperature' ? '--synth-temp' :
+                        id === 'glow' ? '--synth-glow' : '--synth-noise';
+        root.style.setProperty(varName, String(value));
+    }
+
+    // Cross-tab sync
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'synth-temperature' && e.newValue) {
+            const val = parseInt(e.newValue);
+            state.temperature = val;
+            updateCSS('temperature', val);
+            updateArcVisual('temperature', val);
+        }
+        if (e.key === 'synth-glow' && e.newValue) {
+            const val = parseInt(e.newValue);
+            state.glow = val;
+            updateCSS('glow', val);
+            updateArcVisual('glow', val);
+        }
+        if (e.key === 'synth-noise' && e.newValue) {
+            const val = parseInt(e.newValue);
+            state.noise = val;
+            updateCSS('noise', val);
+            updateArcVisual('noise', val);
+        }
+        if (e.key === 'theme' && e.newValue) {
+            document.documentElement.setAttribute('data-theme', e.newValue);
+        }
+    });
+</script>
