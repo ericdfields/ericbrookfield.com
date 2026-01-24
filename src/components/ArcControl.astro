@@ -1,0 +1,91 @@
+---
+export interface Props {
+    id: string;
+    label: string;
+    min?: number;
+    max?: number;
+    defaultValue?: number;
+}
+
+const { id, label, min = 0, max = 100, defaultValue = 50 } = Astro.props;
+---
+
+<div class="arc-control" data-id={id} data-min={min} data-max={max} data-default={defaultValue}>
+    <svg class="arc-svg" viewBox="0 0 60 40" aria-hidden="true">
+        <!-- Background arc -->
+        <path
+            class="arc-bg"
+            d="M 10 35 A 25 25 0 0 1 50 35"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+        />
+        <!-- Value arc -->
+        <path
+            class="arc-value"
+            d="M 10 35 A 25 25 0 0 1 50 35"
+            fill="none"
+            stroke="var(--color-primary)"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-dasharray="78.5"
+            stroke-dashoffset="78.5"
+        />
+        <!-- Draggable dot -->
+        <circle
+            class="arc-dot"
+            cx="10"
+            cy="35"
+            r="6"
+            fill="var(--color-primary)"
+        />
+    </svg>
+    <span class="arc-label">{label}</span>
+</div>
+
+<style>
+    .arc-control {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+    }
+
+    .arc-control:active {
+        cursor: grabbing;
+    }
+
+    .arc-svg {
+        width: 60px;
+        height: 40px;
+    }
+
+    .arc-bg {
+        color: rgba(255, 255, 255, 0.15);
+    }
+
+    :global([data-theme="light"]) .arc-bg {
+        color: rgba(0, 0, 0, 0.15);
+    }
+
+    .arc-value {
+        transition: stroke-dashoffset 0.1s ease-out;
+    }
+
+    .arc-dot {
+        transition: transform 0.1s ease-out;
+        filter: drop-shadow(0 0 4px var(--color-primary));
+    }
+
+    .arc-label {
+        font-size: 10px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--color-text-light);
+    }
+</style>
