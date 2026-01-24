@@ -16,5 +16,8 @@
     "satori": "^0.19.1",
     "sharp": "^0.34.5",
     "unist-util-visit": "^5.0.0"
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.1"
   }
 }

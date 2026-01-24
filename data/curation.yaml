@@ -1,0 +1,97 @@
+# data/curation.yaml
+# Manual timeline entries and corrections to AI inferences
+
+tools:
+  - id: rails
+    name: Ruby on Rails
+    category: framework
+    status: active
+    spans:
+      - start: "2010-01-01"
+    take: "My go-to for web apps. Fast to build, joy to maintain."
+    source: manual
+
+  - id: astro
+    name: Astro
+    category: framework
+    status: active
+    spans:
+      - start: "2024-08-01"
+    take: "Perfect for content sites. This site runs on it."
+    source: manual
+
+  - id: vue
+    name: Vue.js
+    category: framework
+    status: active
+    spans:
+      - start: "2018-01-01"
+    take: "Preferred frontend framework for complex UIs."
+    source: manual
+
+  - id: cursor
+    name: Cursor
+    category: editor
+    status: exploring
+    spans:
+      - start: "2024-06-01"
+    take: "AI-first editor. Seeing how it changes my workflow."
+    replaces: vscode
+    source: manual
+
+  - id: vscode
+    name: VS Code
+    category: editor
+    status: dormant
+    spans:
+      - start: "2016-01-01"
+        end: "2024-06-01"
+    source: manual
+
+projects:
+  - id: patient-platform
+    name: Patient Data Platform
+    description: "Rails 8 system managing sensitive patient records with automated pharmacy data imports."
+    status: active
+    spans:
+      - start: "2023-01-01"
+    tools: [rails]
+    source: manual
+
+  - id: ericbrookfield-com
+    name: ericbrookfield.com
+    description: "This personal site. Now becoming a temporal exploration."
+    status: active
+    spans:
+      - start: "2024-08-01"
+    tools: [astro]
+    source: manual
+
+  - id: podcast-rag
+    name: Podcast RAG System
+    description: "Semantic search across 470+ podcast episodes using ChromaDB and Claude."
+    status: paused
+    spans:
+      - start: "2024-01-01"
+        end: "2024-03-01"
+    tools: []
+    links:
+      - "https://github.com/ericdfields/roderickon"
+    source: manual
+
+interests:
+  - id: ai-tooling
+    name: AI-Assisted Development
+    status: current
+    spans:
+      - start: "2023-03-01"
+    depth: deep
+    source: manual
+
+  - id: design-engineering
+    name: Design Engineering
+    status: current
+    spans:
+      - start: "2010-01-01"
+    depth: deep
+    source: manual
