@@ -1,0 +1,209 @@
+---
+import ArcControl from "./ArcControl.astro";
+---
+
+<div class="control-panel" id="controlPanel">
+    <button class="control-toggle" id="controlToggle" aria-label="Open appearance controls" aria-expanded="false">
+        <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+    </button>
+
+    <div class="control-drawer" id="controlDrawer">
+        <div class="control-grid">
+            <ArcControl id="temperature" label="T" defaultValue={50} />
+            <ArcControl id="glow" label="G" defaultValue={40} />
+            <ArcControl id="noise" label="N" defaultValue={0} />
+        </div>
+
+        <div class="control-divider"></div>
+
+        <button class="theme-toggle-inner" id="themeToggleInner" aria-label="Toggle theme">
+            <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+        </button>
+
+        <button class="reset-button" id="resetControls" aria-label="Reset to defaults" title="Reset">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<style>
+    .control-panel {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+    .control-toggle {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    :global([data-theme="light"]) .control-toggle {
+        border-color: var(--color-border);
+    }
+
+    .control-toggle:hover {
+        border-color: var(--color-primary);
+        background: rgba(224, 122, 61, 0.1);
+    }
+
+    .control-toggle svg {
+        width: 20px;
+        height: 20px;
+        color: rgba(255, 255, 255, 0.7);
+        transition: color 0.3s ease;
+    }
+
+    :global([data-theme="light"]) .control-toggle svg {
+        color: var(--color-text);
+    }
+
+    .control-toggle:hover svg {
+        color: var(--color-primary);
+    }
+
+    /* Pulse animation for first-time discovery */
+    .control-toggle.pulse {
+        animation: toggle-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes toggle-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 transparent; }
+        50% { box-shadow: 0 0 20px 2px var(--color-primary); }
+    }
+
+    .control-drawer {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+        pointer-events: none;
+        transition: all 0.2s ease;
+    }
+
+    .control-drawer.open {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+    }
+
+    .control-grid {
+        display: flex;
+        gap: 16px;
+    }
+
+    .control-divider {
+        width: 100%;
+        height: 1px;
+        background: var(--color-border);
+    }
+
+    .theme-toggle-inner {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid var(--color-border);
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .theme-toggle-inner:hover {
+        border-color: var(--color-primary);
+        background: var(--color-hover);
+    }
+
+    .theme-toggle-inner svg {
+        width: 18px;
+        height: 18px;
+        position: absolute;
+        color: var(--color-text-light);
+        transition: all 0.3s ease;
+    }
+
+    .theme-toggle-inner:hover svg {
+        color: var(--color-primary);
+    }
+
+    .sun-icon { opacity: 0; transform: rotate(180deg); }
+    .moon-icon { opacity: 1; transform: rotate(0deg); }
+
+    :global([data-theme="light"]) .sun-icon { opacity: 1; transform: rotate(0deg); }
+    :global([data-theme="light"]) .moon-icon { opacity: 0; transform: rotate(-180deg); }
+
+    .reset-button {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 20px;
+        height: 20px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .control-drawer:hover .reset-button {
+        opacity: 0.5;
+    }
+
+    .reset-button:hover {
+        opacity: 1 !important;
+    }
+
+    .reset-button svg {
+        width: 14px;
+        height: 14px;
+        color: var(--color-text-light);
+    }
+
+    @media (max-width: 768px) {
+        .control-panel {
+            top: 10px;
+            right: 10px;
+        }
+    }
+</style>
