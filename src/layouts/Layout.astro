@@ -200,6 +200,44 @@ const ogImageUrl = ogImage ? `${siteUrl}${ogImage}` : `${siteUrl}/og-default.png
         100% { background-position: 256px 256px; }
     }
 
+    /* Glow effects driven by --glow-intensity */
+    .glow-text {
+        text-shadow: 0 0 calc(20px * var(--glow-intensity, 0)) var(--color-primary);
+    }
+
+    .glow-border {
+        box-shadow:
+            0 0 calc(30px * var(--glow-intensity, 0)) calc(-5px * var(--glow-intensity, 0)) var(--color-primary),
+            inset 0 0 calc(10px * var(--glow-intensity, 0)) rgba(255, 255, 255, calc(0.1 * var(--glow-intensity, 0)));
+    }
+
+    /* Mouse-tracking glow mixin pattern */
+    .glow-track {
+        --mouse-x: 50%;
+        --mouse-y: 50%;
+        position: relative;
+    }
+
+    .glow-track::after {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        background: radial-gradient(
+            400px circle at var(--mouse-x) var(--mouse-y),
+            hsla(calc(25 + var(--temp-offset, 0)), 74%, 55%, calc(0.25 * var(--glow-intensity, 0))),
+            transparent 40%
+        );
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: -1;
+    }
+
+    .glow-track:hover::after {
+        opacity: 1;
+    }
+
     h1,
     h2,
     h3,
