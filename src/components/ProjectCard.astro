@@ -66,6 +66,27 @@ const accentColor = index % 2 === 0 ? 'orange' : 'teal';
         height: 100%;
         display: flex;
         flex-direction: column;
+        position: relative;
+    }
+
+    .project-card::after {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        background: radial-gradient(
+            400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+            hsla(calc(25 + var(--temp-offset, 0)), 74%, 55%, calc(0.2 * var(--glow-intensity, 0))),
+            transparent 40%
+        );
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 0;
+    }
+
+    .project-card:hover::after {
+        opacity: 1;
     }
 
     .project-card:hover {
@@ -178,3 +199,15 @@ const accentColor = index % 2 === 0 ? 'orange' : 'teal';
         }
     }
 </style>
+
+<script>
+    document.querySelectorAll('.project-card').forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = (card as HTMLElement).getBoundingClientRect();
+            const x = (e as MouseEvent).clientX - rect.left;
+            const y = (e as MouseEvent).clientY - rect.top;
+            (card as HTMLElement).style.setProperty('--mouse-x', `${x}px`);
+            (card as HTMLElement).style.setProperty('--mouse-y', `${y}px`);
+        });
+    });
+</script>
