@@ -1,0 +1,252 @@
+---
+// src/components/TimelineScrubber.astro
+export interface Props {
+  startYear: number;
+  endYear: number;
+}
+
+const { startYear, endYear } = Astro.props;
+const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
+---
+
+<div class="timeline-scrubber" data-start={startYear} data-end={endYear}>
+  <div class="timeline-track">
+    <div class="timeline-progress"></div>
+    <div class="timeline-handle" tabindex="0" role="slider" aria-label="Timeline position" aria-valuemin={startYear} aria-valuemax={endYear} aria-valuenow={endYear}></div>
+  </div>
+  <div class="timeline-years">
+    {years.map(year => (
+      <span class="year-marker" data-year={year}>{year}</span>
+    ))}
+  </div>
+  <div class="timeline-current">
+    <span class="current-date"></span>
+  </div>
+</div>
+
+<style>
+  .timeline-scrubber {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .timeline-track {
+    position: relative;
+    height: 8px;
+    background: var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .timeline-progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: 4px;
+    width: 100%;
+    pointer-events: none;
+  }
+
+  .timeline-handle {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translate(50%, -50%);
+    width: 20px;
+    height: 20px;
+    background: var(--color-primary);
+    border: 3px solid var(--color-surface);
+    border-radius: 50%;
+    cursor: grab;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s ease;
+  }
+
+  .timeline-handle:hover,
+  .timeline-handle:focus {
+    transform: translate(50%, -50%) scale(1.2);
+    outline: none;
+  }
+
+  .timeline-handle:active {
+    cursor: grabbing;
+  }
+
+  .timeline-years {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--spacing-xs);
+    font-size: var(--text-small);
+    color: var(--color-text-light);
+  }
+
+  .year-marker {
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+
+  .year-marker.active {
+    opacity: 1;
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .timeline-current {
+    text-align: center;
+    margin-top: var(--spacing-xs);
+    font-family: "Space Grotesk", sans-serif;
+    font-size: var(--text-h3);
+    color: var(--color-text);
+  }
+</style>
+
+<script>
+  class TimelineScrubber {
+    private container: HTMLElement;
+    private track: HTMLElement;
+    private progress: HTMLElement;
+    private handle: HTMLElement;
+    private currentDateEl: HTMLElement;
+    private startYear: number;
+    private endYear: number;
+    private position: number = 1; // 0-1, starts at end (now)
+    private isDragging: boolean = false;
+
+    // Store bound handlers for cleanup
+    private boundHandleMouseMove: (e: MouseEvent) => void;
+    private boundHandleMouseUp: () => void;
+    private boundHandleTouchMove: (e: TouchEvent) => void;
+    private boundHandleTouchEnd: () => void;
+
+    constructor(container: HTMLElement) {
+      this.container = container;
+      this.track = container.querySelector('.timeline-track')!;
+      this.progress = container.querySelector('.timeline-progress')!;
+      this.handle = container.querySelector('.timeline-handle')!;
+      this.currentDateEl = container.querySelector('.current-date')!;
+      this.startYear = parseInt(container.dataset.start || '2010');
+      this.endYear = parseInt(container.dataset.end || '2026');
+
+      // Bind handlers once for cleanup
+      this.boundHandleMouseMove = (e: MouseEvent) => {
+        if (this.isDragging) this.handleDrag(e.clientX);
+      };
+      this.boundHandleMouseUp = () => this.isDragging = false;
+      this.boundHandleTouchMove = (e: TouchEvent) => {
+        if (this.isDragging && e.touches.length > 0) {
+          e.preventDefault();
+          this.handleDrag(e.touches[0].clientX);
+        }
+      };
+      this.boundHandleTouchEnd = () => this.isDragging = false;
+
+      this.init();
+    }
+
+    private init() {
+      this.updateDisplay();
+      this.bindEvents();
+    }
+
+    private bindEvents() {
+      // Mouse events
+      this.handle.addEventListener('mousedown', () => this.isDragging = true);
+      this.track.addEventListener('click', (e) => this.handleClick(e));
+      document.addEventListener('mousemove', this.boundHandleMouseMove);
+      document.addEventListener('mouseup', this.boundHandleMouseUp);
+
+      // Touch events
+      this.handle.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.isDragging = true;
+      }, { passive: false });
+      this.track.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) {
+          this.handleDrag(e.touches[0].clientX);
+        }
+      }, { passive: true });
+      document.addEventListener('touchmove', this.boundHandleTouchMove, { passive: false });
+      document.addEventListener('touchend', this.boundHandleTouchEnd);
+
+      // Keyboard support
+      this.handle.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') {
+          this.position = Math.max(0, this.position - 0.02);
+          this.updateDisplay();
+          this.emitChange();
+        } else if (e.key === 'ArrowRight') {
+          this.position = Math.min(1, this.position + 0.02);
+          this.updateDisplay();
+          this.emitChange();
+        }
+      });
+    }
+
+    private handleClick(e: MouseEvent) {
+      this.handleDrag(e.clientX);
+    }
+
+    private handleDrag(clientX: number) {
+      const rect = this.track.getBoundingClientRect();
+      this.position = (clientX - rect.left) / rect.width;
+      this.position = Math.max(0, Math.min(1, this.position));
+      this.updateDisplay();
+      this.emitChange();
+    }
+
+    private updateDisplay() {
+      const percentage = this.position * 100;
+      this.progress.style.width = `${percentage}%`;
+      this.handle.style.right = `${100 - percentage}%`;
+      this.handle.style.transform = `translate(50%, -50%)`;
+
+      const currentDate = this.getCurrentDate();
+      this.currentDateEl.textContent = currentDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+      });
+
+      // Update ARIA value
+      const currentYear = currentDate.getFullYear();
+      this.handle.setAttribute('aria-valuenow', String(currentYear));
+
+      // Update year markers
+      this.container.querySelectorAll('.year-marker').forEach(marker => {
+        const year = parseInt((marker as HTMLElement).dataset.year || '0');
+        marker.classList.toggle('active', year === currentYear);
+      });
+    }
+
+    private getCurrentDate(): Date {
+      const totalMs = new Date(this.endYear, 11, 31).getTime() - new Date(this.startYear, 0, 1).getTime();
+      const currentMs = new Date(this.startYear, 0, 1).getTime() + (totalMs * this.position);
+      return new Date(currentMs);
+    }
+
+    private emitChange() {
+      const event = new CustomEvent('timeline:change', {
+        detail: { date: this.getCurrentDate(), position: this.position },
+        bubbles: true,
+      });
+      this.container.dispatchEvent(event);
+    }
+
+    // Cleanup method for removing document-level event listeners
+    public destroy() {
+      document.removeEventListener('mousemove', this.boundHandleMouseMove);
+      document.removeEventListener('mouseup', this.boundHandleMouseUp);
+      document.removeEventListener('touchmove', this.boundHandleTouchMove);
+      document.removeEventListener('touchend', this.boundHandleTouchEnd);
+    }
+  }
+
+  document.querySelectorAll('.timeline-scrubber').forEach(el => {
+    new TimelineScrubber(el as HTMLElement);
+  });
+</script>
