@@ -6,13 +6,16 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "extract-timeline": "npx tsx scripts/extract-timeline.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@astrojs/rss": "^4.0.12",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.10",
     "astro": "^5.13.5",
+    "gray-matter": "^4.0.3",
     "satori": "^0.19.1",
     "sharp": "^0.34.5",
     "unist-util-visit": "^5.0.0"
