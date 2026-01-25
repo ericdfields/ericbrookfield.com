@@ -1,29 +1,110 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import Hero from "../components/Hero.astro";
-import Projects from "../components/Projects.astro";
-import Skills from "../components/Skills.astro";
-import BlogPosts from "../components/BlogPosts.astro";
-import Contact from "../components/Contact.astro";
+// src/pages/index.astro
+import Layout from '../layouts/Layout.astro';
+import TimelineScrubber from '../components/TimelineScrubber.astro';
+import TimelineStrata from '../components/TimelineStrata.astro';
+import BlogPosts from '../components/BlogPosts.astro';
+import Contact from '../components/Contact.astro';
+import { loadTimelineData, getTimelineRange } from '../lib/timeline';
+
+const data = loadTimelineData();
+const range = getTimelineRange(data);
+const startYear = range.start.getFullYear();
+const endYear = range.end.getFullYear();
 ---
 
 <Layout>
-    <main>
-        <Hero
-            name="Eric Brookfield"
-            title="Engineering Director & Product Designer"
-            location="Baltimore, MD, USA"
-            imageUrl="/headshot.jpeg"
-        />
-        <Projects />
-        <Skills />
-        <BlogPosts />
-        <Contact />
-    </main>
+  <main class="timeline-home">
+    <header class="now-header">
+      <div class="container">
+        <div class="now-intro">
+          <img src="/headshot.jpeg" alt="Eric Brookfield" class="headshot" />
+          <div class="now-text">
+            <h1>Eric Brookfield</h1>
+            <p class="tagline">Engineering Director & Product Designer</p>
+            <p class="now-desc">
+              This is a living view of what I'm working on, what tools I use, and what I'm thinking about.
+              Scrub through time to explore my history.
+            </p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <TimelineScrubber startYear={startYear} endYear={endYear} />
+
+    <div class="container">
+      <TimelineStrata
+        tools={data.tools}
+        projects={data.projects}
+        interests={data.interests}
+      />
+    </div>
+
+    <BlogPosts />
+    <Contact />
+  </main>
 </Layout>
 
 <style>
-    main {
-        min-height: 100vh;
+  .timeline-home {
+    min-height: 100vh;
+  }
+
+  .now-header {
+    background: var(--color-secondary);
+    padding: var(--spacing-xl) 0;
+  }
+
+  :global([data-theme="light"]) .now-header {
+    background: var(--color-background);
+  }
+
+  .now-intro {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+  }
+
+  .headshot {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--color-primary);
+    object-fit: cover;
+  }
+
+  .now-text h1 {
+    font-size: var(--text-h1);
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  :global([data-theme="light"]) .now-text h1 {
+    color: var(--color-secondary);
+  }
+
+  .tagline {
+    font-size: var(--text-body);
+    color: var(--color-text);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .now-desc {
+    font-size: var(--text-body);
+    color: var(--color-text-light);
+    max-width: 500px;
+  }
+
+  @media (max-width: 768px) {
+    .now-intro {
+      flex-direction: column;
+      text-align: center;
     }
+
+    .headshot {
+      width: 100px;
+      height: 100px;
+    }
+  }
 </style>
