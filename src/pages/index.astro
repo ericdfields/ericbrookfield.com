@@ -3,6 +3,7 @@
 import Layout from '../layouts/Layout.astro';
 import TimelineScrubber from '../components/TimelineScrubber.astro';
 import TimelineStrata from '../components/TimelineStrata.astro';
+import Skills from '../components/Skills.astro';
 import BlogPosts from '../components/BlogPosts.astro';
 import Contact from '../components/Contact.astro';
 import { loadTimelineData, getTimelineRange } from '../lib/timeline';
@@ -41,6 +42,7 @@ const endYear = range.end.getFullYear();
       />
     </div>
 
+    <Skills />
     <BlogPosts />
     <Contact />
   </main>

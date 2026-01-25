@@ -104,6 +104,16 @@ const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYea
     font-size: var(--text-h3);
     color: var(--color-text);
   }
+
+  /* Disable text selection while dragging */
+  :global(body.timeline-dragging) {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  :global(body.timeline-dragging *) {
+    cursor: grabbing !important;
+  }
 </style>
 
 <script>
@@ -137,14 +147,14 @@ const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYea
       this.boundHandleMouseMove = (e: MouseEvent) => {
         if (this.isDragging) this.handleDrag(e.clientX);
       };
-      this.boundHandleMouseUp = () => this.isDragging = false;
+      this.boundHandleMouseUp = () => this.stopDragging();
       this.boundHandleTouchMove = (e: TouchEvent) => {
         if (this.isDragging && e.touches.length > 0) {
           e.preventDefault();
           this.handleDrag(e.touches[0].clientX);
         }
       };
-      this.boundHandleTouchEnd = () => this.isDragging = false;
+      this.boundHandleTouchEnd = () => this.stopDragging();
 
       this.init();
     }
@@ -156,7 +166,7 @@ const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYea
 
     private bindEvents() {
       // Mouse events
-      this.handle.addEventListener('mousedown', () => this.isDragging = true);
+      this.handle.addEventListener('mousedown', () => this.startDragging());
       this.track.addEventListener('click', (e) => this.handleClick(e));
       document.addEventListener('mousemove', this.boundHandleMouseMove);
       document.addEventListener('mouseup', this.boundHandleMouseUp);
@@ -164,7 +174,7 @@ const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYea
       // Touch events
       this.handle.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        this.isDragging = true;
+        this.startDragging();
       }, { passive: false });
       this.track.addEventListener('touchstart', (e) => {
         if (e.touches.length > 0) {
@@ -186,6 +196,16 @@ const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYea
           this.emitChange();
         }
       });
+    }
+
+    private startDragging() {
+      this.isDragging = true;
+      document.body.classList.add('timeline-dragging');
+    }
+
+    private stopDragging() {
+      this.isDragging = false;
+      document.body.classList.remove('timeline-dragging');
     }
 
     private handleClick(e: MouseEvent) {

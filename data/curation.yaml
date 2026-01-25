@@ -79,6 +79,65 @@ projects:
       - "https://github.com/ericdfields/roderickon"
     source: manual
 
+  - id: territory-management
+    name: Territory Management System
+    description: "Comprehensive platform managing 375+ sales territories across multiple therapeutic divisions. Automated transfer scheduling, coverage analytics, and change audit trails."
+    status: active
+    spans:
+      - start: "2022-01-01"
+    tools: [rails]
+    source: manual
+
+  - id: rd-pipeline-visualizer
+    name: R&D Pipeline Visualizer
+    description: "Interactive Vue/TypeScript dashboard tracking drug development from preclinical through approval. Embeddable widget with multiple visualization modes."
+    status: completed
+    spans:
+      - start: "2021-06-01"
+        end: "2022-12-01"
+    tools: [vue]
+    source: manual
+
+  - id: clinical-trial-platform
+    name: Clinical Trial Platform
+    description: "Multi-tenant Rails application for clinical trial respondent management. Timestamped verification codes, admin dashboards, comprehensive E2E tests."
+    status: completed
+    spans:
+      - start: "2020-01-01"
+        end: "2021-06-01"
+    tools: [rails]
+    source: manual
+
+  - id: multi-market-brand-sites
+    name: Multi-Market Brand Sites
+    description: "12+ regulatory-compliant pharmaceutical websites across US, Canada, Germany, and Austria. HLS video streaming, localization, and CRM integrations."
+    status: active
+    spans:
+      - start: "2019-01-01"
+    tools: [vue]
+    source: manual
+
+  - id: call-recording-analytics
+    name: Call Recording Analytics
+    description: "Node.js system for bulk retrieval and organization of Twilio call recordings. SQLite-backed querying with Excel report generation."
+    status: completed
+    spans:
+      - start: "2023-06-01"
+        end: "2023-12-01"
+    tools: []
+    source: manual
+
+  - id: venndgram
+    name: VennDgram
+    description: "Interactive Venn diagram editor with daily puzzle challenges. Create, share, and solve visual logic puzzles."
+    status: paused
+    spans:
+      - start: "2023-01-01"
+        end: "2023-06-01"
+    links:
+      - "https://github.com/ericdfields/venndgram"
+    source: manual
+
 interests:
   - id: ai-tooling
     name: AI-Assisted Development
