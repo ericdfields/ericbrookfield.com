@@ -94,9 +94,13 @@ export function getTimelineRange(data: TimelineData): { start: Date; end: Date }
     .map(s => new Date(s.end!));
 
   const earliest = new Date(Math.min(...starts.map(d => d.getTime())));
-  const latest = ends.length > 0
+
+  // End date must always be at least today (active items have no end date)
+  const now = new Date();
+  const latestEnded = ends.length > 0
     ? new Date(Math.max(...ends.map(d => d.getTime())))
-    : new Date();
+    : now;
+  const latest = latestEnded.getTime() > now.getTime() ? latestEnded : now;
 
   return { start: earliest, end: latest };
 }
