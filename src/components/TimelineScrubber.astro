@@ -32,6 +32,7 @@ const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYea
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
     padding: var(--spacing-sm) var(--spacing-md);
+    padding-right: 80px; /* Clear the control panel */
   }
 
   .timeline-track {
@@ -117,6 +118,10 @@ const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYea
 
   /* Mobile: show every 5th year */
   @media (max-width: 480px) {
+    .timeline-scrubber {
+      padding-right: 70px; /* Smaller control panel clearance on mobile */
+    }
+
     .timeline-years {
       font-size: 10px;
     }
