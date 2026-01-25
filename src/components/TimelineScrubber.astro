@@ -110,10 +110,7 @@ const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYea
   :global(body.timeline-dragging) {
     user-select: none;
     -webkit-user-select: none;
-  }
-
-  :global(body.timeline-dragging *) {
-    cursor: grabbing !important;
+    cursor: grabbing;
   }
 
   /* Mobile: show every 5th year */
