@@ -114,6 +114,28 @@ const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYea
   :global(body.timeline-dragging *) {
     cursor: grabbing !important;
   }
+
+  /* Mobile: show every 5th year */
+  @media (max-width: 480px) {
+    .timeline-years {
+      font-size: 10px;
+    }
+
+    .year-marker:not(:nth-child(5n + 1)):not(:last-child) {
+      display: none;
+    }
+
+    .timeline-current {
+      font-size: var(--text-body);
+    }
+  }
+
+  /* Tablet: show every other year */
+  @media (min-width: 481px) and (max-width: 768px) {
+    .year-marker:not(:nth-child(2n + 1)):not(:last-child) {
+      display: none;
+    }
+  }
 </style>
 
 <script>
@@ -244,7 +266,10 @@ const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYea
     }
 
     private getCurrentDate(): Date {
-      const totalMs = new Date(this.endYear, 11, 31).getTime() - new Date(this.startYear, 0, 1).getTime();
+      // End at today's date, not December 31
+      const now = new Date();
+      const endDate = now.getFullYear() === this.endYear ? now : new Date(this.endYear, 11, 31);
+      const totalMs = endDate.getTime() - new Date(this.startYear, 0, 1).getTime();
       const currentMs = new Date(this.startYear, 0, 1).getTime() + (totalMs * this.position);
       return new Date(currentMs);
     }
