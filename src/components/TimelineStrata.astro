@@ -1,0 +1,258 @@
+---
+// src/components/TimelineStrata.astro
+import type { Tool, Project, Interest } from '../types/timeline';
+
+export interface Props {
+  tools: Tool[];
+  projects: Project[];
+  interests: Interest[];
+}
+
+const { tools, projects, interests } = Astro.props;
+---
+
+<div class="timeline-strata">
+  <div class="strata-layer strata-tools">
+    <h3 class="strata-label">Tools</h3>
+    <div class="strata-items">
+      {tools.map(tool => (
+        <div
+          class={`strata-item tool-item status-${tool.status} source-${tool.source}`}
+          data-id={tool.id}
+          data-spans={JSON.stringify(tool.spans)}
+        >
+          <span class="item-name">{tool.name}</span>
+          <span class="item-status">{tool.status}</span>
+          {tool.take && <p class="item-take">{tool.take}</p>}
+          {tool.source === 'ai' && tool.aiReasoning && (
+            <p class="item-reasoning">AI: {tool.aiReasoning}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="strata-layer strata-projects">
+    <h3 class="strata-label">Projects</h3>
+    <div class="strata-items">
+      {projects.map(project => (
+        <div
+          class={`strata-item project-item status-${project.status} source-${project.source}`}
+          data-id={project.id}
+          data-spans={JSON.stringify(project.spans)}
+        >
+          <span class="item-name">{project.name}</span>
+          <span class="item-status">{project.status}</span>
+          <p class="item-description">{project.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="strata-layer strata-interests">
+    <h3 class="strata-label">Interests</h3>
+    <div class="strata-items">
+      {interests.map(interest => (
+        <div
+          class={`strata-item interest-item status-${interest.status} depth-${interest.depth} source-${interest.source}`}
+          data-id={interest.id}
+          data-spans={JSON.stringify(interest.spans)}
+        >
+          <span class="item-name">{interest.name}</span>
+          <span class="item-depth">{interest.depth}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .timeline-strata {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg) 0;
+  }
+
+  .strata-layer {
+    position: relative;
+  }
+
+  .strata-label {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: var(--text-small);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .strata-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .strata-item {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    max-width: 300px;
+  }
+
+  /* Status-based opacity */
+  .strata-item.status-active,
+  .strata-item.status-current {
+    opacity: 1;
+    border-color: var(--color-primary);
+  }
+
+  .strata-item.status-exploring {
+    opacity: 0.9;
+    border-style: dashed;
+  }
+
+  .strata-item.status-paused,
+  .strata-item.status-recurring {
+    opacity: 0.7;
+  }
+
+  .strata-item.status-dormant,
+  .strata-item.status-past {
+    opacity: 0.5;
+  }
+
+  .strata-item.status-completed {
+    opacity: 0.6;
+    border-color: var(--color-secondary);
+  }
+
+  .strata-item.status-abandoned {
+    opacity: 0.4;
+    text-decoration: line-through;
+  }
+
+  /* Source-based styling */
+  .strata-item.source-ai {
+    border-style: dashed;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--color-surface),
+      var(--color-surface) 10px,
+      var(--color-surface-elevated) 10px,
+      var(--color-surface-elevated) 20px
+    );
+  }
+
+  .strata-item.source-confirmed {
+    border-width: 2px;
+  }
+
+  /* Temporal visibility - controlled by JS */
+  .strata-item.temporal-hidden {
+    opacity: 0.15;
+    transform: scale(0.95);
+  }
+
+  .strata-item.temporal-faded {
+    opacity: 0.4;
+  }
+
+  .item-name {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600;
+    display: block;
+    color: var(--color-text);
+  }
+
+  .item-status,
+  .item-depth {
+    font-size: var(--text-small);
+    color: var(--color-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .item-take,
+  .item-description {
+    font-size: var(--text-small);
+    color: var(--color-text-light);
+    margin-top: var(--spacing-xs);
+    line-height: 1.5;
+  }
+
+  .item-reasoning {
+    font-size: calc(var(--text-small) * 0.9);
+    color: var(--color-primary);
+    font-style: italic;
+    margin-top: var(--spacing-xs);
+    padding-left: var(--spacing-sm);
+    border-left: 2px solid var(--color-primary);
+    opacity: 0.7;
+  }
+
+  /* Depth indicators for interests */
+  .interest-item.depth-deep {
+    border-width: 3px;
+  }
+
+  .interest-item.depth-medium {
+    border-width: 2px;
+  }
+
+  .interest-item.depth-shallow {
+    border-width: 1px;
+  }
+
+  @media (max-width: 768px) {
+    .strata-item {
+      max-width: 100%;
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  function updateStrataVisibility(date: Date) {
+    const dateStr = date.toISOString().split('T')[0];
+
+    document.querySelectorAll('.strata-item').forEach(item => {
+      const spans = JSON.parse((item as HTMLElement).dataset.spans || '[]');
+
+      const isActive = spans.some((span: { start: string; end?: string }) => {
+        const started = span.start <= dateStr;
+        const notEnded = !span.end || span.end >= dateStr;
+        return started && notEnded;
+      });
+
+      const wasActive = spans.some((span: { start: string; end?: string }) => {
+        return span.end && span.end < dateStr;
+      });
+
+      const willBeActive = spans.some((span: { start: string }) => {
+        return span.start > dateStr;
+      });
+
+      item.classList.remove('temporal-hidden', 'temporal-faded');
+
+      if (!isActive && !wasActive && willBeActive) {
+        item.classList.add('temporal-hidden');
+      } else if (!isActive && wasActive) {
+        item.classList.add('temporal-faded');
+      }
+    });
+  }
+
+  // Listen for timeline changes
+  document.addEventListener('timeline:change', (e: Event) => {
+    const customEvent = e as CustomEvent<{ date: Date; position: number }>;
+    if (customEvent.detail?.date) {
+      updateStrataVisibility(customEvent.detail.date);
+    }
+  });
+
+  // Initialize with current date
+  updateStrataVisibility(new Date());
+</script>
