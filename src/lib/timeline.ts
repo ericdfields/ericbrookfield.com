@@ -10,22 +10,56 @@ interface CurationFile {
   interests?: Interest[];
 }
 
+interface AIFile {
+  tools?: Tool[];
+  projects?: Project[];
+  interests?: Interest[];
+}
+
 export function loadTimelineData(): TimelineData {
   const curationPath = path.join(process.cwd(), 'data', 'curation.yaml');
+  const aiPath = path.join(process.cwd(), 'data', 'timeline-ai.json');
 
   let curation: CurationFile = { tools: [], projects: [], interests: [] };
+  let aiData: AIFile = { tools: [], projects: [], interests: [] };
 
   if (fs.existsSync(curationPath)) {
     const raw = fs.readFileSync(curationPath, 'utf-8');
     curation = yaml.load(raw) as CurationFile;
   }
 
+  if (fs.existsSync(aiPath)) {
+    const raw = fs.readFileSync(aiPath, 'utf-8');
+    aiData = JSON.parse(raw) as AIFile;
+  }
+
+  // Merge: curation overrides AI data by id
+  const mergedTools = mergeById(aiData.tools || [], curation.tools || []);
+  const mergedProjects = mergeById(aiData.projects || [], curation.projects || []);
+  const mergedInterests = mergeById(aiData.interests || [], curation.interests || []);
+
   return {
-    tools: curation.tools || [],
-    projects: curation.projects || [],
-    interests: curation.interests || [],
+    tools: mergedTools,
+    projects: mergedProjects,
+    interests: mergedInterests,
     generatedAt: new Date().toISOString(),
   };
+}
+
+function mergeById<T extends { id: string }>(aiItems: T[], curationItems: T[]): T[] {
+  const merged = new Map<string, T>();
+
+  // Add AI items first
+  for (const item of aiItems) {
+    merged.set(item.id, item);
+  }
+
+  // Curation items override or add
+  for (const item of curationItems) {
+    merged.set(item.id, item);
+  }
+
+  return Array.from(merged.values());
 }
 
 export function getActiveAtDate(
