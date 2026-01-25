@@ -1,0 +1,61 @@
+---
+// src/pages/timeline.astro
+import Layout from '../layouts/Layout.astro';
+import TimelineScrubber from '../components/TimelineScrubber.astro';
+import TimelineStrata from '../components/TimelineStrata.astro';
+import Contact from '../components/Contact.astro';
+import { loadTimelineData, getTimelineRange } from '../lib/timeline';
+
+const data = loadTimelineData();
+const range = getTimelineRange(data);
+const startYear = range.start.getFullYear();
+const endYear = range.end.getFullYear();
+---
+
+<Layout
+  title="Eric Brookfield - Timeline"
+  description="Explore my work, tools, and interests through time."
+>
+  <main class="timeline-page">
+    <header class="timeline-header container">
+      <h1>Timeline</h1>
+      <p class="subtitle">Scrub through time to see what I was building, using, and thinking about.</p>
+    </header>
+
+    <TimelineScrubber startYear={startYear} endYear={endYear} />
+
+    <div class="container">
+      <TimelineStrata
+        tools={data.tools}
+        projects={data.projects}
+        interests={data.interests}
+      />
+    </div>
+
+    <Contact />
+  </main>
+</Layout>
+
+<style>
+  .timeline-page {
+    min-height: 100vh;
+  }
+
+  .timeline-header {
+    padding: var(--spacing-xl) 0 var(--spacing-lg);
+    text-align: center;
+  }
+
+  .timeline-header h1 {
+    font-size: var(--text-h1);
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-text);
+  }
+
+  .subtitle {
+    font-size: var(--text-body);
+    color: var(--color-text-light);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+</style>
