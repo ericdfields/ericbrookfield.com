@@ -52,6 +52,14 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
                     industry, I bring a unique combination of technical expertise
                     and design sensibility to create meaningful digital experiences.
                 </p>
+                <nav class="hero-nav">
+                    <a href="/timeline" class="timeline-link">
+                        <span>Explore Timeline</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                </nav>
             </div>
             <div class="hero-image">
                 <img src={imageUrl} alt={`${name} headshot`} />
@@ -156,6 +164,37 @@ const { name, title, location, imageUrl = "/headshot.jpeg" } = Astro.props;
 
     :global([data-theme="light"]) .bio {
         color: var(--color-text);
+    }
+
+    .hero-nav {
+        margin-top: var(--spacing-md);
+        animation: fadeInUp 1.4s ease-out 0.4s backwards;
+    }
+
+    .timeline-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: var(--color-primary);
+        color: var(--color-background);
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 600;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .timeline-link:hover {
+        background: var(--color-primary-dark);
+        transform: translateX(4px);
+    }
+
+    .timeline-link svg {
+        transition: transform 0.2s ease;
+    }
+
+    .timeline-link:hover svg {
+        transform: translateX(4px);
     }
 
     .hero-image {
