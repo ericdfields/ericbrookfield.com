@@ -9,8 +9,6 @@ categories:
 
 I asked an AI to help me reimagine my personal site. Not redesign — reimagine. I didn't describe a vision or list requirements. I just said "reimagine what a personal website can be."
 
-What followed wasn't what I expected.
-
 The AI didn't generate ideas for me to evaluate. It asked questions. Multiple choice questions, one at a time. And my answers — quick, intuitive, sometimes combining options — accumulated into something I wouldn't have designed if I'd sat down to design it.
 
 ---
@@ -38,20 +36,20 @@ A few more questions. Temporal layers. A living workspace. AI-seeded, human-cura
 
 ---
 
-The interesting thing isn't that the AI asked good questions. It's that multiple choice questions work differently than open-ended ones.
+Multiple choice questions work differently than open-ended ones.
 
 When someone asks "what do you want your site to be?" your brain reaches for existing frames — portfolio, blog, landing page. You describe variations of things you've seen.
 
 But when you're handed four options you didn't write, you're forced to *react*. You feel which one resonates before you can explain why. And then you've committed to something — not a final answer, but a direction that constrains the next question.
 
-This is how the temporal site emerged. I didn't sit down with the concept of "archaeological layers" or "AI-seeded curation." I picked options that felt right. The coherence came from the accumulation of constrained choices, not from a vision I had at the start.
+This is how the temporal site emerged. I picked options that felt right. "Archaeological layers" and "AI-seeded curation" emerged from the choices — not from a concept I started with. The coherence came from the accumulation of constrained choices, not from a vision I had at the start.
 
-There's probably a name for this in design research. Structured ideation, maybe. But experiencing it with an AI collaborator felt different than a human workshop. No social pressure. No one invested in their own idea. Just questions, answers, and an outcome that surprised me.
+Design research has a name for this — structured ideation, maybe. But experiencing it with an AI collaborator felt different than a human workshop. No social pressure. No one invested in their own idea. Just questions, answers, and an outcome that surprised me.
 
 ---
 
 Two hours later, I had a design document, an implementation plan, and twelve committed tasks building a site that treats time as the primary axis. Tools I've used, projects I've worked on, interests I've followed — all placed on a timeline you can scrub through like a video. AI extracts signals from my blog posts; I annotate and correct on top.
 
-Is it better than a normal portfolio? I don't know yet. But it's *mine* in a way that feels different. Not because I designed every pixel, but because every choice in the brainstorming session was a genuine reaction. The AI didn't convince me of anything. It just kept asking until something clicked.
+Is it better than a normal portfolio? I don't know yet. But it's *mine* in a way that feels different. Not because I designed every pixel, but because every choice in the brainstorming session was a genuine reaction. Every choice was mine. The AI just kept asking until something clicked.
 
-Maybe that's the thing worth noting: the creative process with AI isn't about generation. It's about structured discovery. The questions shaped the answer — and the answer was something I didn't know I wanted until I saw the path there.
+That's the thing worth noting: the creative process with AI isn't about generation. It's about structured discovery. The questions shaped the answer — and the answer was something I didn't know I wanted until I saw the path there.
