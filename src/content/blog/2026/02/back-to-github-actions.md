@@ -5,7 +5,7 @@ url: /2026/02/01/back-to-github-actions.html
 categories:
 - "tech"
 ---
-Remember when I was excited about [self-hosted CI on Fly.io](/2026/01/31/self-hosted-ci-flyio.html)? That lasted about a week.
+Remember when I was excited about [self-hosted CI on Fly.io](/2026/01/31/self-hosted-ci-flyio.html)? That lasted about 24 hours.
 
 The setup worked. The runner registered, jobs ran, tests passed. But the machine suspends when idle — that's how you keep costs at $5/month — and waking it up takes time. Every push meant waiting for the instance to spin up, then waiting for npm to realize the cache was there, then waiting for Playwright to remember it had browsers installed.
 
