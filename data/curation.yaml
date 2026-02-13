@@ -29,23 +29,58 @@ tools:
     take: "Preferred frontend framework for complex UIs."
     source: manual
 
-  - id: cursor
-    name: Cursor
-    category: editor
-    status: exploring
+  - id: nextjs
+    name: Next.js
+    category: framework
+    status: active
     spans:
-      - start: "2024-06-01"
-    take: "AI-first editor. Seeing how it changes my workflow."
-    replaces: vscode
+      - start: "2025-06-01"
+    take: "Picket's core. App router, server components, the whole deal."
     source: manual
 
-  - id: vscode
-    name: VS Code
-    category: editor
-    status: dormant
+  - id: neon
+    name: Neon
+    category: database
+    status: active
     spans:
-      - start: "2016-01-01"
-        end: "2024-06-01"
+      - start: "2025-06-01"
+    take: "Postgres that provisions itself via API. Makes multi-tenancy trivial."
+    source: manual
+
+  - id: flyio
+    name: Fly.io
+    category: hosting
+    status: active
+    spans:
+      - start: "2025-06-01"
+    take: "Hosting with an API that handles custom domains and SSL. One call."
+    source: manual
+
+  - id: stripe
+    name: Stripe
+    category: payments
+    status: active
+    spans:
+      - start: "2025-10-01"
+    take: "Connect V2 for marketplace payments. Handles onboarding, KYC, payouts."
+    source: manual
+
+  - id: turborepo
+    name: Turborepo
+    category: build
+    status: active
+    spans:
+      - start: "2026-02-01"
+    take: "Monorepo without the yak-shaving. Cached builds across packages."
+    source: manual
+
+  - id: claude-code
+    name: Claude Code
+    category: ai
+    status: active
+    spans:
+      - start: "2025-06-01"
+    take: "AI pair-programmer. Every Picket commit is co-authored."
     source: manual
 
 projects:
@@ -138,6 +173,17 @@ projects:
       - "https://github.com/ericdfields/venndgram"
     source: manual
 
+  - id: picket
+    name: Picket
+    description: "Multi-tenant SaaS for farmers markets, CSAs, and small food businesses. Stripe billing, self-service signup, visual page builder, subscription management. Went from single-tenant side project to real platform in one week."
+    status: active
+    spans:
+      - start: "2026-01-15"
+    tools: [nextjs, neon, flyio, stripe, turborepo, claude-code]
+    links:
+      - "https://sellwithpicket.com"
+    source: manual
+
 interests:
   - id: ai-tooling
     name: AI-Assisted Development
@@ -152,5 +198,21 @@ interests:
     status: current
     spans:
       - start: "2010-01-01"
+    depth: deep
+    source: manual
+
+  - id: micro-saas
+    name: Micro-SaaS
+    status: current
+    spans:
+      - start: "2025-06-01"
+    depth: deep
+    source: manual
+
+  - id: multi-tenant-architecture
+    name: Multi-Tenant Architecture
+    status: current
+    spans:
+      - start: "2025-06-01"
     depth: deep
     source: manual
