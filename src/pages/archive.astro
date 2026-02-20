@@ -18,6 +18,39 @@ const postsByYear = posts
     );
 
 const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
+
+const urlPattern = /\/(\d{4})\/(\d{2})\/(\d{2})\/([^/]+)\.html/;
+const stripMarkdown = (text: string) =>
+    text
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, "")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .replace(/<[^>]*>/g, "")
+        .replace(/(\*\*|__)(.*?)\1/g, "$2")
+        .replace(/(\*|_)(.*?)\1/g, "$2")
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/^#{1,6}\s+/gm, "")
+        .replace(/\n+/g, " ")
+        .trim();
+
+type ArchivePost = {
+    formattedDate: string;
+    localUrl: string;
+    displayTitle: string;
+};
+
+const processedPostsByYear: Record<number, ArchivePost[]> = {};
+for (const year of years) {
+    processedPostsByYear[Number(year)] = postsByYear[Number(year)].map((post) => {
+        const formattedDate = post.data.date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        const urlMatch = post.data.url.match(urlPattern);
+        const localUrl = urlMatch
+            ? `/${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
+            : `/blog/${post.slug}`;
+        const plainText = stripMarkdown(post.body);
+        const displayTitle = post.data.title || (plainText ? plainText.substring(0, 95) + "..." : "No content available");
+        return { formattedDate, localUrl, displayTitle };
+    });
+}
 ---
 
 <Layout title="Blog Archive - Eric Brookfield">
@@ -38,57 +71,18 @@ const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
                         <section class="year-section">
                             <h2>{year}</h2>
                             <div class="posts-list">
-                                {postsByYear[Number(year)].map((post) => {
-                                    const date = post.data.date;
-
-                                    // Extract the URL path from the original URL or generate from slug
-                                    const urlPattern = new RegExp(
-                                        "/(\\d{4})/(\\d{2})/(\\d{2})/([^/]+)\\.html",
-                                    );
-                                    const urlMatch =
-                                        post.data.url.match(urlPattern);
-                                    const localUrl = urlMatch
-                                        ? `/${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
-                                        : `/blog/${post.slug}`;
-
-                                    // Get plain text from post body for title if needed
-                                    const plainText = post.body
-                                        .replace(/!\[([^\]]*)\]\([^)]+\)/g, "")
-                                        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-                                        .replace(/<[^>]*>/g, "")
-                                        .replace(/(\*\*|__)(.*?)\1/g, "$2")
-                                        .replace(/(\*|_)(.*?)\1/g, "$2")
-                                        .replace(/`([^`]+)`/g, "$1")
-                                        .replace(/^#{1,6}\s+/gm, "")
-                                        .replace(/\n+/g, " ")
-                                        .trim();
-
-                                    // Use title if available, otherwise use first part of content
-                                    const displayTitle =
-                                        post.data.title ||
-                                        (plainText
-                                            ? plainText.substring(0, 95) + "..."
-                                            : "No content available");
-
-                                    return (
-                                        <article class="archive-post">
-                                            <time class="post-date">
-                                                {date.toLocaleDateString(
-                                                    "en-US",
-                                                    {
-                                                        month: "short",
-                                                        day: "numeric",
-                                                    },
-                                                )}
-                                            </time>
-                                            <h3>
-                                                <a href={localUrl}>
-                                                    {displayTitle}
-                                                </a>
-                                            </h3>
-                                        </article>
-                                    );
-                                })}
+                                {processedPostsByYear[Number(year)].map((post) => (
+                                    <article class="archive-post">
+                                        <time class="post-date">
+                                            {post.formattedDate}
+                                        </time>
+                                        <h3>
+                                            <a href={post.localUrl}>
+                                                {post.displayTitle}
+                                            </a>
+                                        </h3>
+                                    </article>
+                                ))}
                             </div>
                         </section>
                     ))
