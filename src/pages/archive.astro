@@ -53,7 +53,13 @@ const years = Object.keys(postsByYear).sort((a, b) => Number(b) - Number(a));
 
                                     // Get plain text from post body for title if needed
                                     const plainText = post.body
+                                        .replace(/!\[([^\]]*)\]\([^)]+\)/g, "")
+                                        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
                                         .replace(/<[^>]*>/g, "")
+                                        .replace(/(\*\*|__)(.*?)\1/g, "$2")
+                                        .replace(/(\*|_)(.*?)\1/g, "$2")
+                                        .replace(/`([^`]+)`/g, "$1")
+                                        .replace(/^#{1,6}\s+/gm, "")
                                         .replace(/\n+/g, " ")
                                         .trim();
 
