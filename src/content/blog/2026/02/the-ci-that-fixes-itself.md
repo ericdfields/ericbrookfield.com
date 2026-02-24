@@ -11,6 +11,8 @@ The development loop I've landed on for [Picket](https://sellwithpicket.com): I 
 
 Let the robot give itself homework.
 
+<img src="/blog-images/2026/c76b9ab9-b219-41d5-bd64-24fb6a7a6031.png" width="1024" height="1536" alt="Robot repairs itself in workshop">
+
 ---
 
 Here's the mechanical part. Two auto-fix workflows in CI, plus a third that hooks into Sentry.
