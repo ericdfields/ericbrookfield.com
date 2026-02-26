@@ -170,6 +170,15 @@ const processedContent = post.body.replace(
         padding: 0;
     }
 
+    :global(.post-content strong) {
+        color: var(--color-text);
+        font-weight: 700;
+    }
+
+    :global(.post-content em) {
+        color: var(--color-text);
+    }
+
     :global(.post-content a) {
         color: var(--color-primary);
         text-decoration: underline;
