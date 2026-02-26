@@ -21,7 +21,7 @@ Oh, and Terms of Service. Because nothing says "real product" like a legal page 
 
 I'm listing all of this not to impress you but because I'm still processing it. I've been building software professionally for over a decade. This isn't a normal week. This isn't even a normal month. And it happened less because of me or Claude than because of what's underneath both of us.
 
----
+## The stack
 
 Here's what actually built Picket this week:
 
@@ -37,7 +37,7 @@ Here's what actually built Picket this week:
 
 Five years ago, half of this stack didn't exist. Neon launched in 2022. Fly's machine API is recent. Stripe Connect V2 is new. The AI pair-programming thing is barely a year old. Each one of these tools removed a category of work that used to be measured in weeks.
 
----
+## When infrastructure catches up to ambition
 
 I keep coming back to a thought I can't shake: this is what it feels like when the infrastructure catches up to the ambition.
 
@@ -49,7 +49,7 @@ A new farmer signs up on the marketing site. That triggers a Neon API call that 
 
 I didn't build any of that infrastructure. I *composed* it. The tools are Lego bricks now, and the bricks have gotten absurdly good.
 
----
+## By the numbers
 
 By the numbers: 163 commits across the week. Roughly 62,000 lines added, 21,000 deleted. The product went from a single-tenant flower farm tool to a multi-tenant SaaS platform with billing, self-service signup, and a marketing site — complete with pricing pages and auto-generated screenshots.
 

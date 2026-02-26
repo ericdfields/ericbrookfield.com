@@ -15,7 +15,7 @@ I'm not being coy about this. Every commit in the log says `Co-Authored-By: Clau
 
 And I'm exhausted. Which is the part nobody warns you about. You'd think offloading the typing to a machine would make the work easier. It doesn't. It makes the work *faster*, which means you do more of it, which means by Friday you've made a hundred decisions you would have normally spread across a month.
 
----
+## The part nobody tells you
 
 Here's the thing nobody tells you about AI pair-programming: the code is the easy part. The hard part — the part that actually matters — is knowing what you want before you ask for it.
 
@@ -27,7 +27,7 @@ That's how I shipped a week's worth of sprints in actual days. Monday was multi-
 
 Each feature started with a design doc. Each design doc came from a brainstorming session. Each brainstorming session took maybe twenty minutes. The implementation took two or three hours. And because the plan was solid, the implementation mostly just *worked* — fewer wrong turns, fewer "actually, let me rethink this" moments halfway through.
 
----
+## And yet
 
 And yet — I'm exhausted. That's the irony. Claude is doing most of the typing. I'm sitting in a chair making decisions and reviewing diffs. It shouldn't be tiring.
 

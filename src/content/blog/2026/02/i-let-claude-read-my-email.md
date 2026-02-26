@@ -13,7 +13,7 @@ Seven thousand of these. Just sitting there. Judging me.
 
 I could have spent a weekend triaging them by hand. I could have declared bankruptcy, archived the lot, and pretended the problem was solved. Instead I did the thing I keep doing lately — I wrote a script and pointed Claude at it.
 
----
+## What I built
 
 Here's what I built: a TypeScript tool that pulls unread emails from [Fastmail's](https://join.fastmail.com/87aac080) JMAP API, sends them to Claude in batches, and asks it to sort each one into four tiers.
 
@@ -27,7 +27,7 @@ Here's what I built: a TypeScript tool that pulls unread emails from [Fastmail's
 
 The whole thing stores classifications in a [Ghost](https://ghost.build) Postgres database so I can audit what happened, and picks up where it left off if anything goes sideways.
 
----
+## The part I didn't expect
 
 The part I didn't expect: Claude is weirdly good at this.
 
@@ -37,7 +37,7 @@ It reads the subject, the sender, the preview text, the unsubscribe header — a
 
 The trick — the thing that keeps this safe instead of terrifying — is a line in the prompt: *lean cautious when in doubt*. I built a hierarchy of caution into the classification. When Claude isn't sure, it keeps the email instead of trashing it. Better to archive something I don't need than delete something I do. That's how you'd tell a human assistant to handle your mail, and that's how you tell a robot, too.
 
----
+## The numbers
 
 I've run it against 5,559 emails — still going. Here's the breakdown:
 
@@ -50,7 +50,7 @@ Two-thirds of my inbox was noise. Gone. And the 16% Claude flagged as attention?
 
 That's what keeps hitting me. Not that AI can classify email — of course it can, that's pattern matching with context. But that it matches *my* judgment so closely, without me writing a hundred sieve rules to teach it what I care about. I described the tiers in plain English, told it to be careful, and it figured out the rest.
 
----
+## What I want AI to be
 
 This is what I want AI to be. Not generating mediocre blog posts or replacing jobs. Reading my email. Doing the tedious classification work I'll never do myself — not because it's hard, but because it's boring, and because there's seven thousand of them, and because life is short.
 

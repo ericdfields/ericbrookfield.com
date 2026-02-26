@@ -14,7 +14,7 @@ The Polyend Play+ is a groovebox that wants organized sample packs — WAV files
 
 What I wanted was to describe a vibe — "experimental hip-hop with vaporwave sunglasses" — and get a curated pack of my own samples that matched. So I built that.
 
----
+## Interpreting a vibe
 
 The interesting part isn't the code. It's what happens when you ask an AI to interpret a vibe.
 
@@ -24,13 +24,13 @@ Claude doesn't know what "vaporwave sunglasses" sounds like. Nobody does. But it
 
 The samples were always there. The AI just helps me find combinations I wouldn't have thought to look for.
 
----
+## Hardware constraints shaped the software
 
 The Play+ has a feature called Beat Fill — it auto-generates drum patterns from your Kick, Snare, and HiHat folders. It needs at least 5 samples per folder. More samples means more variety in the generated patterns.
 
 So the pack generator prioritizes percussion first, then allocates remaining space by weight. The hardware's constraints shaped the software. Without the Play+'s opinions, I'd have built something generic.
 
----
+## Haiku vs. Sonnet
 
 I tried Claude Haiku first — cheaper. But Haiku tagged `kick_808_dark_01.wav` as just "kick." The filename already told me that.
 
@@ -38,7 +38,7 @@ Sonnet returned: `bass, electronic, trap, dark, mellow, dubstep, sustained, long
 
 Shallow tags make the whole system useless. You can't search for "vaporwave sunglasses" if everything is tagged by instrument only.
 
----
+## The pattern
 
 It's [on GitHub](https://github.com/ericdfields/polyend-plus-manager). The pattern feels reusable: AI interprets creative intent, structured data enables search, hardware constraints shape output. I'd love to hear about this flow applied to other hardware electronic instruments.
 

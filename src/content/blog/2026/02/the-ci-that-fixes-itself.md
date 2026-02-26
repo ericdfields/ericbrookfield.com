@@ -13,7 +13,7 @@ Let the robot give itself homework.
 
 <img src="/blog-images/2026/c76b9ab9-b219-41d5-bd64-24fb6a7a6031.png" width="1024" height="1536" alt="Robot repairs itself in workshop">
 
----
+## The mechanics
 
 Here's the mechanical part. Two auto-fix workflows in CI, plus a third that hooks into Sentry.
 
@@ -25,7 +25,7 @@ Claude reads the failure, reads the relevant files, makes changes. The tests run
 
 If Claude has an answer, it commits and pushes. If not, the workflow says so and moves on.
 
----
+## One shot per cycle
 
 The guard that keeps this from spiraling: **one shot per cycle.**
 
@@ -33,7 +33,7 @@ Every auto-fix step reads the last commit message first. If it already contains 
 
 Without this, you get a robot retrying the same wrong fix in a loop. The loop prevention is what makes delegation safe.
 
----
+## What it actually means
 
 The honest version of what this means day-to-day: I mostly don't think about implementation. I think about what the product should do, work through the design, hand that to Claude, and the rest mostly takes care of itself. When it doesn't — when CI pings me with a failure that survived the auto-fix — that's genuinely signal. Something ambiguous enough that the robot couldn't figure it out. Those are the interesting ones.
 

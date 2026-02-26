@@ -11,7 +11,7 @@ categories:
 
 I stared at the pile and recognized the problem. I'd built a smaller inbox. I hadn't built a better one.
 
----
+## A theory of value
 
 [The first post](/2026/02/20/i-let-claude-read-my-email.html) covered the mechanics. This one is about what the mechanics mean.
 
@@ -27,7 +27,7 @@ The four tiers are a theory of value, not a classification scheme.
 
 The key insight: auto-archive is the *default state of email*. Most email is automated. Automated email belongs in the archive. The classifier's job is to find the exceptions.
 
----
+## Getting the bias right
 
 So I flipped the bias. Version one said lean cautious — when in doubt, show it to me. Version two: prefer auto-archive over confirm, confirm over attention.
 
@@ -37,7 +37,7 @@ The personal rules I hardcoded into the prompt are a map of what I actually care
 
 I told Claude this in plain English. It got it. That's still the part that gets me — not that AI can classify email, but that it matches my judgment without a hundred sieve rules.
 
----
+## Learning from what breaks
 
 Fast iteration means you learn from what breaks. I built `npm run correct` to flag misclassified emails and note why. Each correction pattern became a new rule in the prompt. The system sharpens from my disagreements.
 
@@ -45,11 +45,13 @@ The attention queue followed the same logic. Once the noise is automated away, w
 
 ---
 
+## From scripts to a real tool
+
 At some point a collection of scripts starts to feel like friction. So with Claude, I built a PWA — installable, works on the phone, same four tiers, same act workflow. Reclassify-in-act is right in the interface: see a misclassified email, fix it, correction logged. Instant feedback loop, from anywhere.
 
 I couldn't have built that alone in any reasonable timeframe. The gap between "scripts I run sometimes" and "a tool I reach for" — Claude closed that.
 
----
+## Inbox unsullied
 
 I've been calling the goal "inbox zero" in the code. It's the message that prints when the queue empties. But that's not right.
 
