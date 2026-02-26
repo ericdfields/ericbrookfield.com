@@ -65,4 +65,6 @@ The classifier's real job isn't sorting email. It's keeping the inbox clean so y
 
 Snooze isn't procrastination. It's curation across time.
 
-Not inbox zero. Inbox unsullied. The number doesn't matter. The signal does.
+I opened my phone the other morning and saw five emails. I knew what all five were before I tapped any of them — a message from a friend, an unpaid invoice, something from the camp director. No noise. No guilt. No vague dread about what I was probably ignoring.
+
+That feeling. That's what the whole system is for.
