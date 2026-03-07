@@ -25,7 +25,7 @@ The four tiers are a theory of value, not a classification scheme.
 
 **Attention**: a real human expects something, or there's a real financial or medical or legal obligation. This is your actual inbox. This is what email is for.
 
-The key insight: auto-archive is the *default state of email*. Most email is automated. Automated email belongs in the archive. The classifier's job is to find the exceptions.
+Auto-archive is the *default state of email*. Most email is automated. Automated email belongs in the archive. The classifier's job is to find the exceptions.
 
 ## Getting the bias right
 

@@ -54,6 +54,6 @@ That's what keeps hitting me. Not that AI can classify email — of course it ca
 
 This is what I want AI to be. Not generating mediocre blog posts or replacing jobs. Reading my email. Doing the tedious classification work I'll never do myself — not because it's hard, but because it's boring, and because there's seven thousand of them, and because life is short.
 
-A script I run when my inbox gets out of hand. It works. That's it. No grand vision. No startup. Just a tool doing a job I kept avoiding.
+A script I run when my inbox gets out of hand. It works. That's it.
 
-I still have more emails to process and I already feel lighter.
+I still have more emails to process.

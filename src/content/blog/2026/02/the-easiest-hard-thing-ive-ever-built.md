@@ -11,7 +11,7 @@ I wrote [a post on Monday](/2026/02/10/a-hundred-commits-and-a-nap.html) about s
 
 This isn't part two of that story. That post was about what AI pair-programming *feels like* — the compression, the exhaustion, the discovery that the hard part is steering, not typing. This post is about the infrastructure that made the steering possible.
 
-Because here's the thing: Claude wrote the code, but Claude didn't provision the databases. Claude didn't issue SSL certificates for custom domains. Claude didn't handle Stripe webhooks in production. A layer of tools did that — and those tools existing, right now, in this form — that's the actual story.
+Because here's the thing: Claude wrote the code, but Claude didn't provision the databases. Claude didn't issue SSL certificates for custom domains. Claude didn't handle Stripe webhooks in production. A layer of tools did that — and those tools existing, right now, in this form, is worth talking about.
 
 ---
 
@@ -25,9 +25,9 @@ I'm listing all of this not to impress you but because I'm still processing it. 
 
 Here's what actually built Picket this week:
 
-**[Neon](https://neon.tech)** spins up a Postgres database in seconds via API. Multi-tenant architecture means every new signup needs their own database — schema pushed, seed data loaded, connection string registered. That's a provisioning script, not a support ticket. I didn't build a database provisioning system. I called an API that did it for me.
+**[Neon](https://neon.tech)** spins up a Postgres database in seconds via API. Multi-tenant architecture means every new signup needs their own database — schema pushed, seed data loaded, connection string registered. That's a provisioning script, not a support ticket.
 
-**[Fly.io](https://fly.io)** handles custom domains with automatic SSL certificates. A tenant wants `mindys-mums.mypicket.app`? One API call to Fly, a DNS record on their end, and it works. I didn't configure Nginx or manage Let's Encrypt. Fly did.
+**[Fly.io](https://fly.io)** handles custom domains with automatic SSL certificates. A tenant wants `mindys-mums.mypicket.app`? One API call to Fly, a DNS record on their end, and it works.
 
 **[Stripe Connect](https://stripe.com/connect)** let me wire up connected accounts for marketplace payments without building payment infrastructure. Stripe handles onboarding, KYC, payouts. I built the UI around it.
 
@@ -38,8 +38,6 @@ Here's what actually built Picket this week:
 Five years ago, half of this stack didn't exist. Neon launched in 2022. Fly's machine API is recent. Stripe Connect V2 is new. The AI pair-programming thing is barely a year old. Each one of these tools removed a category of work that used to be measured in weeks.
 
 ## When infrastructure catches up to ambition
-
-I keep coming back to a thought I can't shake: this is what it feels like when the infrastructure catches up to the ambition.
 
 Picket started because [my wife](https://brookfield-blooms.com) needed an ecommerce solution for her small side-hustle and nothing fit. Shopify, Square, all of them — either too complex for what she needed, or they ate unreasonably into margins. So I started building one. And this time, the plumbing just... wasn't a problem.
 
