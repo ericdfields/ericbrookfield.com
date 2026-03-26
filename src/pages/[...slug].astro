@@ -6,7 +6,6 @@ export async function getStaticPaths() {
     const posts = await getCollection("blog");
 
     return posts.map((post) => {
-        // Extract the path from the URL in frontmatter
         const urlMatch = post.data.url.match(
             /\/(\d{4})\/(\d{2})\/(\d{2})\/([^/]+)\.html/,
         );
@@ -25,29 +24,21 @@ const { post, slug } = Astro.props;
 const { Content } = await post.render();
 const date = post.data.date;
 
-// Get plain text from post body for title if needed
 const plainText = post.body
     .replace(/<[^>]*>/g, "")
     .replace(/\n+/g, " ")
     .trim();
 
-// Use title if available, otherwise use first part of content
 const displayTitle =
     post.data.title ||
     (plainText ? plainText.substring(0, 95) + "..." : "No content available");
-
-// Process content to fix image paths
-const processedContent = post.body.replace(
-    /https:\/\/ericbrookfield\.com\/uploads\/(\d{4})\//g,
-    "/blog-images/$1/",
-);
 ---
 
-<Layout title={displayTitle} ogImage={`/og/${slug}.png`}>
-    <article class="blog-post">
+<Layout title={`${displayTitle} — Eric Brookfield`} ogImage={`/og/${slug}.png`}>
+    <article class="post">
         <div class="container">
             <header class="post-header">
-                <a href="/" class="back-link">← Back to Home</a>
+                <a href="/" class="back-link">Back</a>
                 <time class="post-date">
                     {
                         date.toLocaleDateString("en-US", {
@@ -63,20 +54,21 @@ const processedContent = post.body.replace(
                 <Content />
             </div>
             <footer class="post-footer">
-                <a href="/archive"> View all posts → </a>
+                <a href="/">Home</a>
+                <a href="/archive">Archive</a>
             </footer>
         </div>
     </article>
 </Layout>
 
 <style>
-    .blog-post {
+    .post {
         padding: var(--spacing-xl) 0;
         min-height: 100vh;
     }
 
     .container {
-        max-width: 800px;
+        max-width: 720px;
     }
 
     .post-header {
@@ -86,80 +78,115 @@ const processedContent = post.body.replace(
     .back-link {
         display: inline-block;
         margin-bottom: var(--spacing-md);
-        font-family: "Inter", sans-serif;
-        font-size: 0.95rem;
-        color: var(--color-primary);
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
         text-decoration: none;
-        transition: color 0.2s ease;
+        border-bottom: 1px solid var(--color-rule);
+        padding-bottom: 1px;
     }
 
     .back-link:hover {
-        color: var(--color-primary-dark);
+        color: var(--color-accent);
+        border-color: var(--color-accent);
     }
 
     .post-date {
         display: block;
-        font-family: "Inter", sans-serif;
-        font-size: 0.95rem;
-        color: var(--color-text-light);
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
         margin-bottom: var(--spacing-sm);
     }
 
     .post-header h1 {
-        font-size: 2.5rem;
-        line-height: 1.2;
-        margin-bottom: var(--spacing-lg);
+        font-size: var(--text-h1);
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        margin-bottom: 0;
     }
 
     .post-content {
-        font-size: 1.125rem;
-        line-height: 1.8;
+        font-size: clamp(1rem, 1.15vw, 1.0625rem);
+        line-height: 1.75;
         margin-bottom: var(--spacing-xl);
     }
 
     :global(.post-content p) {
-        margin-bottom: var(--spacing-md);
+        margin-bottom: 1.5rem;
+        color: var(--color-text-muted);
+    }
+
+    :global(.post-content p strong),
+    :global(.post-content strong) {
+        color: var(--color-text);
+        font-weight: 600;
+    }
+
+    :global(.post-content em) {
+        color: var(--color-text);
     }
 
     :global(.post-content h2) {
-        font-size: 1.75rem;
+        font-size: clamp(1.375rem, 2.5vw, 1.75rem);
         margin-top: var(--spacing-lg);
         margin-bottom: var(--spacing-sm);
+        letter-spacing: -0.02em;
+    }
+
+    :global(.post-content h2::after) {
+        display: none;
     }
 
     :global(.post-content h3) {
-        font-size: 1.5rem;
+        font-size: clamp(1.125rem, 1.8vw, 1.375rem);
         margin-top: var(--spacing-md);
         margin-bottom: var(--spacing-sm);
     }
 
+    :global(.post-content a) {
+        color: var(--color-accent);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    :global(.post-content a:hover) {
+        color: var(--color-text);
+    }
+
     :global(.post-content ul),
     :global(.post-content ol) {
-        margin-bottom: var(--spacing-md);
-        padding-left: var(--spacing-md);
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+        color: var(--color-text-muted);
     }
 
     :global(.post-content li) {
-        margin-bottom: var(--spacing-xs);
+        margin-bottom: 0.5rem;
     }
 
     :global(.post-content blockquote) {
-        border-left: 4px solid var(--color-primary);
+        border-left: 3px solid var(--color-accent);
         padding-left: var(--spacing-md);
         margin: var(--spacing-md) 0;
         font-style: italic;
-        color: var(--color-text-light);
+        color: var(--color-text-muted);
     }
 
     :global(.post-content code) {
-        font-family: "Courier New", monospace;
-        background: var(--color-surface);
-        padding: 0.2em 0.4em;
-        font-size: 0.9em;
+        font-family: var(--font-mono);
+        background: rgba(227, 222, 212, 0.06);
+        padding: 0.15em 0.35em;
+        font-size: 0.88em;
     }
 
     :global(.post-content pre) {
-        background: var(--color-surface);
+        background: rgba(227, 222, 212, 0.04);
+        border: 1px solid var(--color-rule);
         padding: var(--spacing-md);
         overflow-x: auto;
         margin: var(--spacing-md) 0;
@@ -168,24 +195,7 @@ const processedContent = post.body.replace(
     :global(.post-content pre code) {
         background: none;
         padding: 0;
-    }
-
-    :global(.post-content strong) {
-        color: var(--color-text);
-        font-weight: 700;
-    }
-
-    :global(.post-content em) {
-        color: var(--color-text);
-    }
-
-    :global(.post-content a) {
-        color: var(--color-primary);
-        text-decoration: underline;
-    }
-
-    :global(.post-content a:hover) {
-        color: var(--color-primary-dark);
+        font-size: 0.875rem;
     }
 
     :global(.post-content img) {
@@ -198,45 +208,37 @@ const processedContent = post.body.replace(
     :global(.post-content hr) {
         border: none;
         height: 1px;
-        background: linear-gradient(
-            90deg,
-            transparent,
-            var(--color-secondary) 20%,
-            var(--color-primary) 50%,
-            var(--color-secondary) 80%,
-            transparent
-        );
+        background: var(--color-rule);
         margin: var(--spacing-lg) 0;
-        opacity: 0.6;
-    }
-
-    :global([data-theme="light"] .post-content hr) {
-        opacity: 0.4;
     }
 
     .post-footer {
-        padding-top: var(--spacing-lg);
-        border-top: 1px solid var(--color-border);
-        text-align: center;
+        display: flex;
+        gap: var(--spacing-md);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--color-rule);
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
     }
 
     .post-footer a {
-        font-size: 1.05rem;
-        color: var(--color-primary);
+        color: var(--color-text-muted);
         text-decoration: none;
     }
 
     .post-footer a:hover {
-        color: var(--color-primary-dark);
+        color: var(--color-accent);
     }
 
     @media (max-width: 768px) {
-        .post-header h1 {
-            font-size: 2rem;
+        .post {
+            padding: var(--spacing-lg) 0;
         }
 
-        .post-content {
-            font-size: 1.05rem;
+        .post-header h1 {
+            font-size: clamp(1.5rem, 5vw, 2rem);
         }
     }
 </style>

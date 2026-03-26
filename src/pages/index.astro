@@ -1,112 +1,590 @@
 ---
-// src/pages/index.astro
 import Layout from '../layouts/Layout.astro';
-import TimelineScrubber from '../components/TimelineScrubber.astro';
-import TimelineStrata from '../components/TimelineStrata.astro';
-import Skills from '../components/Skills.astro';
-import BlogPosts from '../components/BlogPosts.astro';
-import Contact from '../components/Contact.astro';
-import { loadTimelineData, getTimelineRange } from '../lib/timeline';
+import { getCollection } from 'astro:content';
 
-const data = loadTimelineData();
-const range = getTimelineRange(data);
-const startYear = range.start.getFullYear();
-const endYear = range.end.getFullYear();
+// Blog posts for Writing section
+const posts = await getCollection('blog');
+const recentPosts = posts
+    .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+    .slice(0, 10);
+
+const urlPattern = /\/(\d{4})\/(\d{2})\/(\d{2})\/([^/]+)\.html/;
+const stripMarkdown = (text: string) =>
+    text
+        .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/<[^>]*>/g, '')
+        .replace(/(\*\*|__)(.*?)\1/g, '$2')
+        .replace(/(\*|_)(.*?)\1/g, '$2')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/^#{1,6}\s+/gm, '')
+        .replace(/\n+/g, ' ')
+        .trim();
+
+const processedPosts = recentPosts.map((post) => {
+    const date = post.data.date;
+    const formattedDate = date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+    const urlMatch = post.data.url.match(urlPattern);
+    const localUrl = urlMatch
+        ? `/${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
+        : `/blog/${post.slug}`;
+    const plainText = stripMarkdown(post.body);
+    const displayTitle = post.data.title || (plainText ? plainText.substring(0, 80) + '...' : 'Untitled');
+    return { formattedDate, localUrl, displayTitle };
+});
+
+// Shipped section data
+const shipped = [
+    { year: 2026, entries: [
+        { name: 'Picket', desc: 'Multi-tenant SaaS for farmers markets. Next.js, Neon, Stripe Connect.' },
+        { name: 'Paperclip', desc: 'AI agent orchestration platform. Built the company with agents.' },
+        { name: 'Leadrrr', desc: 'Lead generation micro-SaaS. From zero to paying customers.' },
+    ]},
+    { year: 2025, entries: [
+        { name: 'AI agent fleet', desc: 'Multi-agent development workflow. Claude Code, Codex, orchestrated.' },
+        { name: 'ericbrookfield.com v3', desc: 'This site. Astro, timeline scrubber, synth controls.' },
+    ]},
+    { year: 2024, entries: [
+        { name: 'Podcast RAG', desc: 'Semantic search across 470+ podcast episodes. ChromaDB + Claude.' },
+        { name: 'Creative Outcomes', desc: 'Rails consultancy site. From pitch to production.' },
+        { name: 'ericbrookfield.com v2', desc: 'Second generation personal site. Editorial design system.' },
+    ]},
+    { year: 2023, entries: [
+        { name: 'Patient Data Platform', desc: 'Rails 8 system managing sensitive patient records. Automated pharmacy imports.' },
+        { name: 'Call Recording Analytics', desc: 'Node.js bulk retrieval of Twilio recordings. SQLite + Excel reports.' },
+        { name: 'VennDgram', desc: 'Interactive Venn diagram editor with daily puzzle challenges.' },
+    ]},
+    { year: 2022, entries: [
+        { name: 'Territory Management', desc: '375+ sales territories across therapeutic divisions. Transfer scheduling, audit trails.' },
+        { name: 'R&D Pipeline Visualizer', desc: 'Vue/TypeScript dashboard tracking drug development. Embeddable widget.' },
+    ]},
+    { year: 2020, entries: [
+        { name: 'Clinical Trial Platform', desc: 'Multi-tenant Rails app for trial respondent management. Verification codes, E2E tests.' },
+    ]},
+    { year: 2019, entries: [
+        { name: 'Multi-Market Brand Sites', desc: '12+ regulatory-compliant pharma websites. US, Canada, Germany, Austria.' },
+        { name: 'Podcast CMS', desc: 'Custom publishing platform for internal podcast network.' },
+    ]},
+    { year: 2018, entries: [
+        { name: 'Picket v1', desc: 'First attempt at farmers market software. Rails monolith.' },
+        { name: 'Couponing platform', desc: 'Vue.js frontend for pharmaceutical coupon distribution.' },
+    ]},
+    { year: 2010, entries: [
+        { name: 'Print Rush app', desc: 'The beginning. Ruby on Rails.' },
+    ]},
+];
 ---
 
 <Layout>
-  <main class="timeline-home">
-    <header class="now-header">
-      <div class="container">
-        <div class="now-intro">
-          <img src="/headshot.jpeg" alt="Eric Brookfield" class="headshot" />
-          <div class="now-text">
-            <h1>Eric Brookfield</h1>
-            <p class="tagline">Engineering Director & Product Designer</p>
-            <p class="now-desc">
-              This is a living view of what I'm working on, what tools I use, and what I'm thinking about.
-              Scrub through time to explore my history.
-            </p>
-          </div>
+    <main>
+        <!-- Identity Block -->
+        <header class="identity">
+            <div class="container">
+                <div class="identity-meta">
+                    <span class="meta-label">Brooklyn, NY</span>
+                    <span class="meta-sep">/</span>
+                    <span class="meta-label">Est. 2010</span>
+                </div>
+                <h1 class="name">ERIC<br/>BROOKFIELD<span class="period">.</span></h1>
+                <div class="identity-bio">
+                    <p>Builds things, leads teams, writes about tech. Currently shipping multi-tenant SaaS and writing AI agents through the weekdays.</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Divider -->
+        <div class="container"><hr class="rule" /></div>
+
+        <!-- Editorial Two-Column: Writing + Currently -->
+        <section class="editorial">
+            <div class="container">
+                <div class="editorial-grid">
+                    <!-- Writing Column -->
+                    <div class="col-writing">
+                        <h2 class="section-head">WRITING</h2>
+                        <div class="writing-list">
+                            {processedPosts.map((post) => (
+                                <a href={post.localUrl} class="writing-item">
+                                    <span class="writing-title">{post.displayTitle}</span>
+                                    <span class="writing-date">{post.formattedDate}</span>
+                                </a>
+                            ))}
+                        </div>
+                        <a href="/archive" class="archive-link">Full archive</a>
+                    </div>
+
+                    <!-- Vertical Rule -->
+                    <div class="col-rule"></div>
+
+                    <!-- Currently Column -->
+                    <div class="col-currently">
+                        <h2 class="section-head">CURRENTLY</h2>
+                        <div class="currently-list">
+                            <div class="currently-item">
+                                <span class="currently-label">Project</span>
+                                <p>Picket — multi-tenant SaaS for farmers markets and CSAs.</p>
+                            </div>
+                            <div class="currently-item">
+                                <span class="currently-label">Stack</span>
+                                <p>Next.js, Neon, Stripe Connect, Turborepo.</p>
+                            </div>
+                            <div class="currently-item">
+                                <span class="currently-label">Tools</span>
+                                <p>Claude Code, Neovim, Linear, Vercel, Fly.io.</p>
+                            </div>
+                        </div>
+
+                        <blockquote class="pullquote">
+                            "The gap between idea and production is a weekend now."
+                        </blockquote>
+
+                        <div class="currently-list">
+                            <div class="currently-item">
+                                <span class="currently-label">Also</span>
+                                <p>AI-assisted development, multi-agent orchestration, brutalist web design that doesn't look like a robot made it.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Divider -->
+        <div class="container"><hr class="rule" /></div>
+
+        <!-- Shipped Section -->
+        <section class="shipped">
+            <div class="container">
+                <h2 class="shipped-head">SHIPPED</h2>
+                <div class="shipped-timeline">
+                    {shipped.map((group) => (
+                        <div class="shipped-year-group">
+                            <div class="shipped-year">{group.year}</div>
+                            <div class="shipped-entries">
+                                {group.entries.map((entry) => (
+                                    <div class="shipped-entry">
+                                        <span class="shipped-name">{entry.name}</span>
+                                        <span class="shipped-desc">{entry.desc}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <p class="shipped-tagline">16 years of shipping. Still going.</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="site-footer">
+            <div class="container">
+                <div class="footer-grid">
+                    <a href="mailto:eric@ericbrookfield.com">eric@ericbrookfield.com</a>
+                    <a href="https://github.com/ericdfields" target="_blank" rel="noopener">GitHub</a>
+                    <a href="https://linkedin.com/in/ericbrookfield" target="_blank" rel="noopener">LinkedIn</a>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Hidden interaction: orange dot -->
+        <div class="secret-dot" id="secret-dot" aria-hidden="true">
+            <div class="secret-message" id="secret-message">
+                <span>You found it.</span>
+            </div>
         </div>
-      </div>
-    </header>
-
-    <TimelineScrubber startYear={startYear} endYear={endYear} />
-
-    <div class="container">
-      <TimelineStrata
-        tools={data.tools}
-        projects={data.projects}
-        interests={data.interests}
-      />
-    </div>
-
-    <Skills />
-    <BlogPosts />
-    <Contact />
-  </main>
+    </main>
 </Layout>
 
 <style>
-  .timeline-home {
-    min-height: 100vh;
-  }
-
-  .now-header {
-    background: var(--color-secondary);
-    padding: var(--spacing-xl) 0;
-  }
-
-  :global([data-theme="light"]) .now-header {
-    background: var(--color-background);
-  }
-
-  .now-intro {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-lg);
-  }
-
-  .headshot {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    border: 3px solid var(--color-primary);
-    object-fit: cover;
-  }
-
-  .now-text h1 {
-    font-size: var(--text-h1);
-    color: var(--color-primary);
-    margin-bottom: var(--spacing-xs);
-  }
-
-  :global([data-theme="light"]) .now-text h1 {
-    color: var(--color-secondary);
-  }
-
-  .tagline {
-    font-size: var(--text-body);
-    color: var(--color-text);
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .now-desc {
-    font-size: var(--text-body);
-    color: var(--color-text-light);
-    max-width: 500px;
-  }
-
-  @media (max-width: 768px) {
-    .now-intro {
-      flex-direction: column;
-      text-align: center;
+    /* ====== IDENTITY BLOCK ====== */
+    .identity {
+        padding: var(--spacing-xl) 0 var(--spacing-lg);
     }
 
-    .headshot {
-      width: 100px;
-      height: 100px;
+    .identity-meta {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
     }
-  }
+
+    .meta-sep {
+        color: var(--color-accent);
+    }
+
+    .name {
+        font-size: var(--text-name);
+        font-weight: 700;
+        line-height: 0.88;
+        letter-spacing: -0.04em;
+        text-transform: uppercase;
+        color: var(--color-text);
+        margin-bottom: 2rem;
+    }
+
+    .period {
+        color: var(--color-accent);
+    }
+
+    .identity-bio {
+        max-width: 520px;
+    }
+
+    .identity-bio p {
+        font-size: var(--text-body);
+        line-height: 1.6;
+        color: var(--color-text-muted);
+    }
+
+    /* ====== RULES ====== */
+    .rule {
+        border: none;
+        height: 1px;
+        background: var(--color-rule);
+        margin: 0;
+    }
+
+    /* ====== EDITORIAL GRID ====== */
+    .editorial {
+        padding: var(--spacing-lg) 0;
+    }
+
+    .editorial-grid {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .section-head {
+        font-family: var(--font-display);
+        font-size: var(--text-h2);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+        color: var(--color-text);
+    }
+
+    /* Writing column */
+    .writing-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .writing-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+        padding: 0.65rem 0;
+        border-bottom: 1px solid var(--color-rule);
+        text-decoration: none;
+        transition: color 0.15s ease;
+    }
+
+    .writing-item:last-child {
+        border-bottom: none;
+    }
+
+    .writing-item:hover .writing-title {
+        color: var(--color-accent);
+    }
+
+    .writing-title {
+        font-size: var(--text-body);
+        color: var(--color-text);
+        line-height: 1.35;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .writing-date {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .archive-link {
+        display: inline-block;
+        margin-top: 1.25rem;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-bottom: 1px solid var(--color-rule);
+        padding-bottom: 2px;
+        transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .archive-link:hover {
+        color: var(--color-accent);
+        border-color: var(--color-accent);
+    }
+
+    /* Vertical rule between columns */
+    .col-rule {
+        background: var(--color-rule);
+        width: 1px;
+    }
+
+    /* Currently column */
+    .currently-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .currently-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .currently-label {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 500;
+    }
+
+    .currently-item p {
+        font-size: var(--text-body);
+        color: var(--color-text-muted);
+        line-height: 1.55;
+    }
+
+    .pullquote {
+        margin: 2rem 0;
+        padding: 1.5rem 0;
+        border-top: 1px solid var(--color-rule);
+        border-bottom: 1px solid var(--color-rule);
+        font-family: var(--font-display);
+        font-size: clamp(1rem, 1.3vw, 1.2rem);
+        font-style: italic;
+        font-weight: 500;
+        color: var(--color-text);
+        line-height: 1.45;
+    }
+
+    /* ====== SHIPPED SECTION ====== */
+    .shipped {
+        padding: var(--spacing-xl) 0;
+    }
+
+    .shipped-head {
+        font-family: var(--font-display);
+        font-size: clamp(1.5rem, 2.5vw, 2rem);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: var(--spacing-lg);
+        color: var(--color-text);
+    }
+
+    .shipped-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+    }
+
+    .shipped-year-group {
+        display: grid;
+        grid-template-columns: clamp(4rem, 8vw, 7rem) 1fr;
+        gap: 2rem;
+    }
+
+    .shipped-year {
+        font-family: var(--font-display);
+        font-size: clamp(1.8rem, 4vw, 3.5rem);
+        font-weight: 700;
+        color: var(--color-text);
+        line-height: 1;
+        letter-spacing: -0.03em;
+        opacity: 0.3;
+    }
+
+    .shipped-entries {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding-top: 0.35rem;
+    }
+
+    .shipped-entry {
+        display: flex;
+        flex-direction: row;
+        gap: 0.75rem;
+        align-items: baseline;
+        line-height: 1.5;
+    }
+
+    .shipped-name {
+        font-family: var(--font-display);
+        font-size: var(--text-body);
+        font-weight: 600;
+        color: var(--color-text);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .shipped-name::after {
+        content: ' —';
+        color: var(--color-text-muted);
+        font-weight: 400;
+    }
+
+    .shipped-desc {
+        font-size: var(--text-body);
+        color: var(--color-text-muted);
+        line-height: 1.5;
+    }
+
+    .shipped-tagline {
+        margin-top: var(--spacing-lg);
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    /* ====== FOOTER ====== */
+    .site-footer {
+        padding: var(--spacing-lg) 0;
+        border-top: 1px solid var(--color-rule);
+    }
+
+    .footer-grid {
+        display: flex;
+        gap: var(--spacing-md);
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .footer-grid a {
+        color: var(--color-text-muted);
+        text-decoration: none;
+        transition: color 0.15s ease;
+    }
+
+    .footer-grid a:hover {
+        color: var(--color-accent);
+    }
+
+    /* ====== HIDDEN INTERACTION: ORANGE DOT ====== */
+    .secret-dot {
+        position: fixed;
+        right: 2.5rem;
+        top: 50%;
+        width: 4px;
+        height: 4px;
+        background: var(--color-accent);
+        cursor: default;
+        z-index: 100;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .secret-dot:hover {
+        transform: scale(3);
+    }
+
+    .secret-message {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        white-space: nowrap;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-accent);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease 0.15s;
+    }
+
+    .secret-dot:hover .secret-message {
+        opacity: 1;
+    }
+
+    /* ====== MOBILE RESPONSIVE ====== */
+    @media (max-width: 768px) {
+        .identity {
+            padding: var(--spacing-lg) 0 var(--spacing-md);
+        }
+
+        .name {
+            font-size: clamp(2.8rem, 13vw, 5rem);
+        }
+
+        .editorial-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .col-rule {
+            display: none;
+        }
+
+        .col-currently {
+            border-top: 1px solid var(--color-rule);
+            padding-top: var(--spacing-md);
+        }
+
+        .writing-item {
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .writing-title {
+            white-space: normal;
+        }
+
+        .shipped-year-group {
+            grid-template-columns: 3.5rem 1fr;
+            gap: 1rem;
+        }
+
+        .shipped-year {
+            font-size: clamp(1.4rem, 6vw, 2rem);
+        }
+
+        .shipped-entry {
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .shipped-name::after {
+            display: none;
+        }
+
+        .footer-grid {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .secret-dot {
+            right: 1rem;
+        }
+    }
 </style>
