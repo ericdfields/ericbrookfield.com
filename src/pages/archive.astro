@@ -4,7 +4,6 @@ import { getCollection } from "astro:content";
 
 const posts = await getCollection("blog");
 
-// Sort posts by date and group by year
 const postsByYear = posts
     .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
     .reduce(
@@ -53,47 +52,32 @@ for (const year of years) {
 }
 ---
 
-<Layout title="Blog Archive - Eric Brookfield">
+<Layout title="Archive — Eric Brookfield">
     <main class="archive">
         <div class="container">
             <header class="archive-header">
-                <a href="/" class="back-link">← Back to Home</a>
-                <h1>Blog Archive</h1>
-                <p class="archive-description">
-                    A collection of thoughts, notes, and musings on technology,
-                    design, and life.
-                </p>
+                <a href="/" class="back-link">Back</a>
+                <h1>ARCHIVE</h1>
+                <p class="post-count">{posts.length} posts since {years[years.length - 1]}</p>
             </header>
 
             <div class="posts-by-year">
                 {
                     years.map((year) => (
                         <section class="year-section">
-                            <h2>{year}</h2>
+                            <div class="year-label">{year}</div>
                             <div class="posts-list">
                                 {processedPostsByYear[Number(year)].map((post) => (
-                                    <article class="archive-post">
-                                        <time class="post-date">
-                                            {post.formattedDate}
-                                        </time>
-                                        <h3>
-                                            <a href={post.localUrl}>
-                                                {post.displayTitle}
-                                            </a>
-                                        </h3>
-                                    </article>
+                                    <a href={post.localUrl} class="archive-post">
+                                        <span class="post-title">{post.displayTitle}</span>
+                                        <span class="post-date">{post.formattedDate}</span>
+                                    </a>
                                 ))}
                             </div>
                         </section>
                     ))
                 }
             </div>
-
-            <footer class="archive-footer">
-                <p>
-                    {posts.length} posts since {years[years.length - 1]}
-                </p>
-            </footer>
         </div>
     </main>
 </Layout>
@@ -115,113 +99,99 @@ for (const year of years) {
     .back-link {
         display: inline-block;
         margin-bottom: var(--spacing-md);
-        font-family: "Inter", sans-serif;
-        font-size: 0.95rem;
-        color: var(--color-primary);
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
         text-decoration: none;
-        transition: color 0.2s ease;
+        border-bottom: 1px solid var(--color-rule);
+        padding-bottom: 1px;
     }
 
     .back-link:hover {
-        color: var(--color-primary-dark);
+        color: var(--color-accent);
+        border-color: var(--color-accent);
     }
 
     .archive-header h1 {
-        font-size: 3rem;
-        margin-bottom: var(--spacing-sm);
-        letter-spacing: -0.03em;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        letter-spacing: 0.04em;
+        margin-bottom: 0.5rem;
     }
 
-    .archive-description {
-        font-size: 1.25rem;
-        color: var(--color-text-light);
-        max-width: 600px;
-    }
-
-    .posts-by-year {
-        margin-bottom: var(--spacing-xl);
+    .post-count {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
     }
 
     .year-section {
-        margin-bottom: var(--spacing-xl);
+        display: grid;
+        grid-template-columns: clamp(3.5rem, 6vw, 5rem) 1fr;
+        gap: 2rem;
+        margin-bottom: var(--spacing-lg);
     }
 
-    .year-section h2 {
-        font-size: 2rem;
-        margin-bottom: var(--spacing-md);
-        color: var(--color-primary);
-        border-bottom: 2px solid var(--color-border);
-        padding-bottom: var(--spacing-xs);
-        display: inline-block;
-    }
-
-    .year-section h2::after {
-        display: none;
+    .year-label {
+        font-family: var(--font-display);
+        font-size: clamp(1.25rem, 2vw, 1.75rem);
+        font-weight: 700;
+        color: var(--color-text);
+        opacity: 0.3;
+        line-height: 1;
+        padding-top: 0.5rem;
     }
 
     .posts-list {
         display: flex;
         flex-direction: column;
-        gap: var(--spacing-sm);
     }
 
     .archive-post {
-        display: grid;
-        grid-template-columns: 80px 1fr;
-        gap: var(--spacing-md);
-        padding: var(--spacing-sm) 0;
+        display: flex;
+        justify-content: space-between;
         align-items: baseline;
-        border-bottom: 1px solid var(--color-border);
+        gap: 1rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--color-rule);
+        text-decoration: none;
     }
 
     .archive-post:last-child {
         border-bottom: none;
     }
 
-    .post-date {
-        font-family: "Inter", sans-serif;
-        font-size: 0.875rem;
-        color: var(--color-text-light);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+    .archive-post:hover .post-title {
+        color: var(--color-accent);
     }
 
-    .archive-post h3 {
-        font-size: 1.25rem;
-        font-weight: 500;
-        margin: 0;
-    }
-
-    .archive-post h3 a {
+    .post-title {
         color: var(--color-text);
-        text-decoration: none;
-        transition: color 0.2s ease;
+        font-size: var(--text-body);
+        line-height: 1.35;
+        transition: color 0.15s ease;
     }
 
-    .archive-post h3 a:hover {
-        color: var(--color-primary);
-    }
-
-    .archive-footer {
-        text-align: center;
-        padding-top: var(--spacing-lg);
-        border-top: 1px solid var(--color-border);
-        color: var(--color-text-light);
-        font-style: italic;
+    .post-date {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     @media (max-width: 768px) {
-        .archive-header h1 {
-            font-size: 2rem;
+        .year-section {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
         }
 
         .archive-post {
-            grid-template-columns: 1fr;
-            gap: var(--spacing-xs);
-        }
-
-        .post-date {
-            font-size: 0.8rem;
+            flex-direction: column;
+            gap: 0.1rem;
         }
     }
 </style>
