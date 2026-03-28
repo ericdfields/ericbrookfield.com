@@ -7,10 +7,6 @@ categories:
 - "ai"
 ---
 
-# I Stopped Prompting AI and Started Managing It. A Paperclip Field Report.
-
-
-
 I'm an engineer and builder juggling multiple software projects at once. Earlier this year, I started using [Paperclip](https://paperclip.ing), an open-source agent orchestration platform, to manage the engineering across all of them.
 
 
