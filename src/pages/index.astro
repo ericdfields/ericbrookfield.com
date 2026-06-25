@@ -37,44 +37,58 @@ const processedPosts = recentPosts.map((post) => {
     return { formattedDate, localUrl, displayTitle };
 });
 
-// Shipped section data
+// Shipped section data — every entry traces to a real repo (Podcast RAG dated from local files)
 const shipped = [
     { year: 2026, entries: [
-        { name: 'Picket', desc: 'Multi-tenant SaaS for farmers markets. Next.js, Neon, Stripe Connect.' },
-        { name: 'Paperclip', desc: 'AI agent orchestration platform. Built the company with agents.' },
-        { name: 'Leadrrr', desc: 'Lead generation micro-SaaS. From zero to paying customers.' },
+        { name: 'Picket', desc: 'E-commerce storefronts for backyard businesses — orders, subscriptions, payouts. Turborepo, Next.js, Neon, Stripe Connect.' },
+        { name: 'VandaRx', desc: 'Multi-product prescription e-commerce API — Stripe payments, multi-pharmacy fulfillment. Rails 8, Sidekiq.' },
+        { name: 'Leadrrr', desc: 'AI email-outreach app — Claude API + Fastmail JMAP. Next.js, Neon, Fly.io.' },
+        { name: 'Argus', desc: 'Media asset catalog service. Hono on Cloudflare Workers, R2, D1.' },
+        { name: 'Brookfield Digital', desc: 'Agency site. Astro on a Cloudflare Worker, SES contact form.' },
     ]},
     { year: 2025, entries: [
-        { name: 'AI agent fleet', desc: 'Multi-agent development workflow. Claude Code, Codex, orchestrated.' },
-        { name: 'ericbrookfield.com v3', desc: 'This site. Astro, timeline scrubber, synth controls.' },
+        { name: 'ericbrookfield.com', desc: 'This site. Astro, timeline scrubber, synth controls.' },
+        { name: 'Podcast RAG', desc: 'Semantic search + Q&A over 470+ "Roderick on the Line" episodes. FastAPI, ChromaDB, Claude.' },
+        { name: 'VennDgram', desc: 'Daily Venn-diagram challenge — submissions, upvotes, subscriptions. Rails 8, Tailwind, Stripe.' },
+        { name: 'Patient data platform', desc: 'Pharma data platform — automated encrypted imports, analytics. Rails 8, Postgres.' },
+        { name: 'Territory management', desc: 'Sales territory system — assignments, transfers, audit trails. Rails 8.' },
     ]},
     { year: 2024, entries: [
-        { name: 'Podcast RAG', desc: 'Semantic search across 470+ podcast episodes. ChromaDB + Claude.' },
-        { name: 'Creative Outcomes', desc: 'Rails consultancy site. From pitch to production.' },
-        { name: 'ericbrookfield.com v2', desc: 'Second generation personal site. Editorial design system.' },
+        { name: 'Creative Outcomes', desc: 'One-page brand site — "Expect Creative Outcomes." Astro.' },
+        { name: 'Vanda Events', desc: 'Corporate events site. Vue SSG, Tailwind.' },
     ]},
     { year: 2023, entries: [
-        { name: 'Patient Data Platform', desc: 'Rails 8 system managing sensitive patient records. Automated pharmacy imports.' },
-        { name: 'Call Recording Analytics', desc: 'Node.js bulk retrieval of Twilio recordings. SQLite + Excel reports.' },
-        { name: 'VennDgram', desc: 'Interactive Venn diagram editor with daily puzzle challenges.' },
+        { name: 'Clinical Code Generator', desc: 'Clinical-trial adherence codes — timestamped verification. Rails.' },
+        { name: 'Ponvory sites', desc: 'Patient + HCP product websites. Vue, Vite, Tailwind.' },
     ]},
     { year: 2022, entries: [
-        { name: 'Territory Management', desc: '375+ sales territories across therapeutic divisions. Transfer scheduling, audit trails.' },
-        { name: 'R&D Pipeline Visualizer', desc: 'Vue/TypeScript dashboard tracking drug development. Embeddable widget.' },
+        { name: 'Study recruitment site', desc: 'German clinical-study recruitment site. React SSR, Tailwind.' },
+    ]},
+    { year: 2021, entries: [
+        { name: 'SMS info platform', desc: 'SMS information site. Rails 6, Tailwind.' },
     ]},
     { year: 2020, entries: [
-        { name: 'Clinical Trial Platform', desc: 'Multi-tenant Rails app for trial respondent management. Verification codes, E2E tests.' },
+        { name: 'Calypso', desc: 'Genotyping-data web portal + pipeline. TypeScript front end, Python data.' },
     ]},
     { year: 2019, entries: [
-        { name: 'Multi-Market Brand Sites', desc: '12+ regulatory-compliant pharma websites. US, Canada, Germany, Austria.' },
-        { name: 'Podcast CMS', desc: 'Custom publishing platform for internal podcast network.' },
+        { name: 'Ruthinium', desc: 'Cross-platform product — web, iOS, Android. Rails + Swift + Kotlin.' },
+        { name: 'Ultra-CRM', desc: 'Sales CRM platform — Rails API, Vue front end.' },
+        { name: 'Hetlioz sites', desc: 'Patient + HCP product websites. Rails.' },
     ]},
     { year: 2018, entries: [
-        { name: 'Picket v1', desc: 'First attempt at farmers market software. Rails monolith.' },
-        { name: 'Couponing platform', desc: 'Vue.js frontend for pharmaceutical coupon distribution.' },
+        { name: 'Corporate site', desc: 'Company website + CMS. Rails, Fae.' },
+        { name: 'Pluto', desc: 'Clinical/patient support application. Rails + React.' },
+        { name: 'Themis', desc: 'Case management system. Rails + React.' },
+    ]},
+    { year: 2017, entries: [
+        { name: 'Reporting platform', desc: 'Self-service reporting — Rails API + React/Apollo front end.' },
+        { name: 'FanaptWeb', desc: 'Fanapt product website.' },
+    ]},
+    { year: 2014, entries: [
+        { name: 'Jupiter', desc: "Vanda's core CRM — the flagship monolith. 4,150 commits and counting. Rails." },
     ]},
     { year: 2010, entries: [
-        { name: 'Print Rush app', desc: 'The beginning. Ruby on Rails.' },
+        { name: 'OProto', desc: 'Static-site prototyping starter — Rails, StaticMatic, Haml, Sass. The beginning.' },
     ]},
 ];
 ---
@@ -126,7 +140,7 @@ const shipped = [
                         <div class="currently-list">
                             <div class="currently-item">
                                 <span class="currently-label">Project</span>
-                                <p>Picket — multi-tenant SaaS for farmers markets and CSAs.</p>
+                                <p>Picket — e-commerce storefronts for backyard businesses: flower farms, bakers, market gardens.</p>
                             </div>
                             <div class="currently-item">
                                 <span class="currently-label">Stack</span>
