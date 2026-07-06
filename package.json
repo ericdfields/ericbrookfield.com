@@ -19,5 +19,8 @@
   },
   "devDependencies": {
     "playwright": "^1.57.0"
+  },
+  "overrides": {
+    "fast-xml-parser": "5.9.3"
   }
 }
