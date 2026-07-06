@@ -1,0 +1,16 @@
+version: 2
+# Managed by BRO-847 (part of BRO-844 vuln-monitoring QA). npm, weekly, grouped minor/patch.
+updates:
+  - package-ecosystem: "npm"
+    directories:
+      - "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      npm-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
