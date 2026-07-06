@@ -9,15 +9,15 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/rss": "^4.0.12",
+    "@astrojs/rss": "^4.0.19",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.10",
     "astro": "^5.13.5",
-    "satori": "^0.19.1",
-    "sharp": "^0.34.5",
-    "unist-util-visit": "^5.0.0"
+    "satori": "^0.26.0",
+    "sharp": "^0.35.3",
+    "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
-    "playwright": "^1.57.0"
+    "playwright": "^1.61.1"
   }
 }
