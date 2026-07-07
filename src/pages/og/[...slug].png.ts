@@ -15,7 +15,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
         );
         const slug = urlMatch
             ? `${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
-            : `blog/${post.slug}`;
+            : `blog/${post.id}`;
 
         const plainText = toPlainText(post.body);
 
