@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { toPlainText } from '../lib/plain-text';
 
 export async function GET(context) {
   const posts = await getCollection('blog');
@@ -16,10 +17,7 @@ export async function GET(context) {
       : `/blog/${post.slug}`;
 
     // Get plain text from post body
-    const plainText = post.body
-      .replace(/<[^>]*>/g, '')
-      .replace(/\n+/g, ' ')
-      .trim();
+    const plainText = toPlainText(post.body);
 
     // Use title if available, otherwise use first part of content
     const displayTitle = post.data.title ||
