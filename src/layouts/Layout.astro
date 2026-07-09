@@ -3,16 +3,40 @@ export interface Props {
     title?: string;
     description?: string;
     ogImage?: string;
+    jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
     title = "Eric Brookfield",
     description = "Engineering director, product designer, builder of things.",
     ogImage,
+    jsonLd,
 } = Astro.props;
 
 const siteUrl = "https://ericbrookfield.com";
 const ogImageUrl = ogImage ? `${siteUrl}${ogImage}` : `${siteUrl}/og-default.png`;
+// Self-referencing canonical for each page (BRO-989). Built from the pathname
+// only, so query params (e.g. ?ref=) are stripped and never split authority.
+// Astro.site is set in astro.config.mjs; fall back to the literal origin.
+const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? siteUrl);
+
+// Person JSON-LD is emitted on every page (BRO-989). Page-specific structured
+// data (e.g. BlogPosting on posts) is passed via the `jsonLd` prop.
+const personJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Eric Brookfield",
+    url: siteUrl,
+    jobTitle: "Engineering director, product designer, builder of things",
+    sameAs: [
+        "https://linkedin.com/in/ericbrookfield",
+        "https://github.com/ericdfields",
+    ],
+};
+const structuredData = [
+    personJsonLd,
+    ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : []),
+];
 ---
 
 <!doctype html>
@@ -23,12 +47,14 @@ const ogImageUrl = ogImage ? `${siteUrl}${ogImage}` : `${siteUrl}/og-default.png
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="generator" content={Astro.generator} />
         <meta name="description" content={description} />
+        <link rel="canonical" href={canonicalURL.href} />
         <title>{title}</title>
 
         <!-- Open Graph -->
         <meta property="og:type" content="website" />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonicalURL.href} />
         <meta property="og:image" content={ogImageUrl} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
@@ -59,6 +85,15 @@ const ogImageUrl = ogImage ? `${siteUrl}${ogImage}` : `${siteUrl}/og-default.png
             title="Eric Brookfield - JSON Feed"
             href="/feed.json"
         />
+
+        {
+            structuredData.map((item) => (
+                <script
+                    type="application/ld+json"
+                    set:html={JSON.stringify(item)}
+                />
+            ))
+        }
     </head>
     <body>
         <slot />

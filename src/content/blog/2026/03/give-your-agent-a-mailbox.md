@@ -1,5 +1,6 @@
 ---
 title: "Give Your Agent a Mailbox"
+description: "Giving an AI assistant its own email address using Fastmail, Resend, and a Cloudflare Worker relay so services can reach it and it can act."
 date: 2026-03-25 12:00:00 +0000
 url: /2026/03/25/give-your-agent-a-mailbox.html
 categories:

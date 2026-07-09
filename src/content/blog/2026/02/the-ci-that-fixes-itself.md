@@ -1,5 +1,6 @@
 ---
 title: "The CI That Fixes Itself"
+description: "A CI setup where Claude automatically fixes failing tests and Sentry errors, with a one-shot-per-cycle guard that keeps the auto-fixing safe."
 date: 2026-02-24 18:00:00 +0000
 url: /2026/02/24/the-ci-that-fixes-itself.html
 categories:

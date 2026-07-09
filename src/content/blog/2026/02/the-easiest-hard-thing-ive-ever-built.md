@@ -1,5 +1,6 @@
 ---
 title: "The Easiest Hard Thing I've Ever Built"
+description: "How modern tools like Neon, Fly.io, Stripe Connect, Turborepo, and Claude let one person compose a multi-tenant SaaS in a single week."
 date: 2026-02-13 12:00:00 +0000
 url: /2026/02/13/the-easiest-hard-thing-ive-ever-built.html
 categories:

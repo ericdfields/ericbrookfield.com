@@ -1,5 +1,6 @@
 ---
 title: "Back to GitHub Actions"
+description: "Abandoning the self-hosted Fly.io CI runner after a day because cold-start delays created too much friction, and returning to GitHub Actions."
 date: 2026-02-01 12:00:00 +0000
 url: /2026/02/01/back-to-github-actions.html
 categories:
