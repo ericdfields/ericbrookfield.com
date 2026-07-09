@@ -40,11 +40,11 @@ const processedPosts = recentPosts.map((post) => {
 // Shipped section data — every entry traces to a real repo (Podcast RAG dated from local files)
 const shipped = [
     { year: 2026, entries: [
-        { name: 'Picket', desc: 'E-commerce storefronts for backyard businesses — orders, subscriptions, payouts. Turborepo, Next.js, Neon, Stripe Connect.' },
+        { name: 'Picket', url: 'https://sellwithpicket.com', desc: 'E-commerce storefronts for backyard businesses — orders, subscriptions, payouts. Turborepo, Next.js, Neon, Stripe Connect.' },
         { name: 'VandaRx', desc: 'Multi-product prescription e-commerce API — Stripe payments, multi-pharmacy fulfillment. Rails 8, Sidekiq.' },
         { name: 'Leadrrr', desc: 'AI email-outreach app — Claude API + Fastmail JMAP. Next.js, Neon, Fly.io.' },
-        { name: 'Argus', desc: 'Media asset catalog service. Hono on Cloudflare Workers, R2, D1.' },
-        { name: 'Brookfield Digital', desc: 'Agency site. Astro on a Cloudflare Worker, SES contact form.' },
+        { name: 'Argus', url: 'https://argus.build', desc: 'Media asset catalog service. Hono on Cloudflare Workers, R2, D1.' },
+        { name: 'Brookfield Digital', url: 'https://brkdllc.com', desc: 'Agency site. Astro on a Cloudflare Worker, SES contact form.' },
     ]},
     { year: 2025, entries: [
         { name: 'ericbrookfield.com', desc: 'This site. Astro, timeline scrubber, synth controls.' },
@@ -181,7 +181,11 @@ const shipped = [
                             <div class="shipped-entries">
                                 {group.entries.map((entry) => (
                                     <div class="shipped-entry">
-                                        <span class="shipped-name">{entry.name}</span>
+                                        {entry.url ? (
+                                            <a class="shipped-name shipped-name-link" href={entry.url} target="_blank" rel="noopener">{entry.name}</a>
+                                        ) : (
+                                            <span class="shipped-name">{entry.name}</span>
+                                        )}
                                         <span class="shipped-desc">{entry.desc}</span>
                                     </div>
                                 ))}
@@ -198,6 +202,7 @@ const shipped = [
             <div class="container">
                 <div class="footer-grid">
                     <a href="mailto:eric@ericbrookfield.com">eric@ericbrookfield.com</a>
+                    <a href="https://brkdllc.com" target="_blank" rel="noopener">Brookfield Digital</a>
                     <a href="https://github.com/ericdfields" target="_blank" rel="noopener">GitHub</a>
                     <a href="https://linkedin.com/in/ericbrookfield" target="_blank" rel="noopener">LinkedIn</a>
                 </div>
@@ -462,6 +467,17 @@ const shipped = [
         content: ' —';
         color: var(--color-text-muted);
         font-weight: 400;
+    }
+
+    a.shipped-name-link {
+        color: var(--color-accent);
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+
+    a.shipped-name-link:hover {
+        text-decoration: underline;
+        text-underline-offset: 2px;
     }
 
     .shipped-desc {
