@@ -88,6 +88,9 @@ const blogPostingJsonLd = {
                     }
                 </time>
                 <h1>{displayTitle}</h1>
+                <p class="post-byline">
+                    By <a href="/" rel="author">Eric Brookfield</a>
+                </p>
             </header>
             <div class="post-content">
                 <Content />
@@ -140,6 +143,14 @@ const blogPostingJsonLd = {
         text-transform: uppercase;
         letter-spacing: 0.06em;
         margin-bottom: var(--spacing-sm);
+    }
+
+    .post-byline {
+        margin: var(--spacing-sm) 0 0;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        letter-spacing: 0.04em;
     }
 
     .post-header h1 {
