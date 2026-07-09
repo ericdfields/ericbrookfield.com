@@ -1,5 +1,6 @@
 import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
+import { toPlainText } from '../lib/plain-text';
 
 export async function GET(context) {
   const posts = await getCollection('blog');
@@ -18,13 +19,10 @@ export async function GET(context) {
       const urlMatch = post.data.url.match(/\/(\d{4})\/(\d{2})\/(\d{2})\/([^/]+)\.html/);
       const localUrl = urlMatch
         ? `/${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
-        : `/blog/${post.slug}`;
+        : `/blog/${post.id}`;
 
       // Get plain text from post body for description
-      const plainText = post.body
-        .replace(/<[^>]*>/g, '')
-        .replace(/\n+/g, ' ')
-        .trim();
+      const plainText = toPlainText(post.body);
 
       // Use title if available, otherwise use first part of content
       const displayTitle = post.data.title ||

@@ -1,5 +1,6 @@
 ---
 title: "A Second Pair of Eyes (Made of API Calls)"
+description: "How a solo developer built a Claude-powered PR review bot for a second pair of eyes, and how it compares to Anthropic's new Code Review feature."
 date: 2026-03-09 12:00:00 +0000
 url: /2026/03/09/a-second-pair-of-eyes.html
 categories:

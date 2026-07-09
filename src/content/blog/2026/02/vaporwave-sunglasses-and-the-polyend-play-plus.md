@@ -1,5 +1,6 @@
 ---
 title: "Vaporwave Sunglasses and the Polyend Play+"
+description: "Building a tool that uses AI to tag 8,000 audio samples and curate Polyend Play+ packs from a described vibe like vaporwave sunglasses."
 date: 2026-02-04 15:00:00 +0000
 url: /2026/02/04/vaporwave-sunglasses-and-the-polyend-play-plus.html
 categories:

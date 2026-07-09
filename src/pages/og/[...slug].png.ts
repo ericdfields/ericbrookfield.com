@@ -4,6 +4,7 @@ import satori from "satori";
 import sharp from "sharp";
 import fs from "node:fs";
 import path from "node:path";
+import { toPlainText } from "../../lib/plain-text";
 
 export const getStaticPaths: GetStaticPaths = async () => {
     const posts = await getCollection("blog");
@@ -14,12 +15,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
         );
         const slug = urlMatch
             ? `${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
-            : `blog/${post.slug}`;
+            : `blog/${post.id}`;
 
-        const plainText = post.body
-            .replace(/<[^>]*>/g, "")
-            .replace(/\n+/g, " ")
-            .trim();
+        const plainText = toPlainText(post.body);
 
         const title =
             post.data.title ||

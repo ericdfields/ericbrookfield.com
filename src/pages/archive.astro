@@ -44,7 +44,7 @@ for (const year of years) {
         const urlMatch = post.data.url.match(urlPattern);
         const localUrl = urlMatch
             ? `/${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
-            : `/blog/${post.slug}`;
+            : `/blog/${post.id}`;
         const plainText = stripMarkdown(post.body);
         const displayTitle = post.data.title || (plainText ? plainText.substring(0, 95) + "..." : "No content available");
         return { formattedDate, localUrl, displayTitle };

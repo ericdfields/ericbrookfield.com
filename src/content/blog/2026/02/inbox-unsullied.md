@@ -1,5 +1,6 @@
 ---
 title: "Inbox Unsullied"
+description: "Refining the email classifier's bias toward auto-archive, building a PWA, and reframing the goal from inbox zero to a trustworthy, unsullied inbox."
 date: 2026-02-25 12:00:00 +0000
 url: /2026/02/25/inbox-unsullied.html
 categories:
