@@ -1,5 +1,6 @@
 ---
 title: "The Questions Shaped the Answer"
+description: "How an AI reimagined the author's personal site not by generating ideas but by asking multiple-choice questions that led to a temporal design."
 date: 2026-01-25 22:30:00 +0000
 url: /2026/01/25/the-questions-shaped-the-answer.html
 categories:

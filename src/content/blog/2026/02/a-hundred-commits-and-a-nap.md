@@ -1,5 +1,6 @@
 ---
 title: "A Hundred Commits and a Nap"
+description: "Shipping a hundred commits in a week with Claude writing the code, and the exhaustion of compressing a month of product decisions into days."
 date: 2026-02-10 12:00:00 +0000
 url: /2026/02/10/a-hundred-commits-and-a-nap.html
 categories:

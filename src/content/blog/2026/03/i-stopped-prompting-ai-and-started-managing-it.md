@@ -1,5 +1,6 @@
 ---
 title: "I Stopped Prompting AI and Started Managing It. A Paperclip Field Report."
+description: "A field report on using Paperclip to manage AI coding agents like a company, with roles, tickets, budgets, and real infrastructure."
 date: 2026-03-28 12:00:00 +0000
 url: /2026/03/28/i-stopped-prompting-ai-and-started-managing-it.html
 categories:

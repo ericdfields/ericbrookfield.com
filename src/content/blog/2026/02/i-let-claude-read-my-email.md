@@ -1,5 +1,6 @@
 ---
 title: "I Let Claude Read My Email"
+description: "Building a tool that has Claude sort thousands of unread emails into four tiers, and finding its cautious judgment closely matches the author's own."
 date: 2026-02-20 12:00:00 +0000
 url: /2026/02/20/i-let-claude-read-my-email.html
 categories:
