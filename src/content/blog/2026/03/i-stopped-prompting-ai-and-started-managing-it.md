@@ -1,6 +1,6 @@
 ---
-title: "I Stopped Prompting AI and Started Managing It. A Paperclip Field Report."
-description: "A field report on using Paperclip to manage AI coding agents like a company, with roles, tickets, budgets, and real infrastructure."
+title: "I Stopped Prompting AI and Started Managing It. A Paperclip Field Report on Agentic Workflows."
+description: "A field report on agentic workflows with Paperclip — managing AI coding agents like a company: roles, tickets, budgets, and real infrastructure."
 date: 2026-03-28 12:00:00 +0000
 url: /2026/03/28/i-stopped-prompting-ai-and-started-managing-it.html
 categories:
@@ -8,7 +8,7 @@ categories:
 - "ai"
 ---
 
-I'm an engineer and builder juggling multiple software projects at once. Earlier this year, I started using [Paperclip](https://paperclip.ing), an open-source agent orchestration platform, to manage the engineering across all of them.
+I'm an engineer and builder juggling multiple software projects at once. Earlier this year, I started using [Paperclip](https://paperclip.ing), an open-source agent orchestration platform, to manage the engineering across all of them. What follows is a field report on the agentic workflows that came out of it.
 
 
 
@@ -140,4 +140,4 @@ When a platform feature is missing, I try to work around it first. If the workar
 
 
 
-Across my projects, I've closed hundreds of issues — most built by agents. One of those projects is [Picket](https://sellwithpicket.com), an e-commerce platform for farms and local food producers that I'm building largely this way. It's real software serving real customers, and the majority of the codebase was written by agents managed through Paperclip. But I'm still driving a hundred percent of the time. I pass off implementation to agents, and it's working out. But the vision, the priorities, the judgment calls — those are mine.
+Across my projects, I've closed hundreds of issues — most built by agents. One of those projects is [Picket](https://sellwithpicket.com), an e-commerce platform for farms and local food producers that I'm building largely this way; the same agentic workflow took its test suite [from zero to 475 tests in a day](https://brkdllc.com/work/picket-test-coverage-zero-to-suite/). Another is the ops app for my microgreen operation, which went [from a plain-language spec to a deployed product in seven phases](https://brkdllc.com/work/brookfield-grow-ops-7-phase-build/). It's real software serving real customers, and the majority of the codebase was written by agents managed through Paperclip. But I'm still driving a hundred percent of the time. I pass off implementation to agents, and it's working out. But the vision, the priorities, the judgment calls — those are mine.
