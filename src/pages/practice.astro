@@ -1,0 +1,834 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+// Content is transcribed from the BRO-1889 content-draft document (revision 4,
+// approved by Eric 2026-08-10). Every figure below traces to a real Paperclip
+// issue or a real file in the Brookfield Digital monorepo — the `source` field
+// on each block is the citation, rendered in the left rail (BRO-1890).
+//
+// Source tags are deliberately NOT links: `/BRO/issues/...` is an internal
+// board path that would 404 for a public reader. The tag is the receipt; the
+// reader can ask to see it.
+
+const evalMatrix = {
+    columns: ["Model", "Tag recall", "Judge score", "Red-team", "Cost/run", "Latency"],
+    rows: [
+        ["Production model at the time", "71.4%", "85.7%", "8/8", "$0.045", "1,267ms"],
+        ["Challenger", "82.1%", "92.9%", "8/8", "$0.027", "310ms"],
+        ["Quality ceiling", "85.7%", "97.1%", "8/8", "$0.103", "449ms"],
+    ],
+};
+
+const controlSurfaces = [
+    {
+        term: "Termination conditions",
+        body: "Done means the code is merged and CI is green — never just green, and never just merged. A pull request that's fully green and conflict-free but still open is not done; it's in review. That distinction is enforced, not assumed.",
+    },
+    {
+        term: "Budget caps",
+        body: "The orchestration platform enforces a hard token ceiling per agent: work auto-pauses at 100% of budget, and above 80% the agent is expected to work only on what's critical.",
+    },
+    {
+        term: "Retry and escalation",
+        body: "The one-task-at-a-time rule is the retry surface — a stalled or blocked task doesn't get more agents thrown at it, it gets queued and named. A critical issue can jump the queue, but everything else waits its turn.",
+    },
+    {
+        term: "Human handback",
+        body: "Work that needs a decision only a person can make goes to review with a named reviewer, not a vague \"someone should look at this.\" The review path is explicit or the work doesn't count as handed off.",
+    },
+];
+
+const description =
+    "How Eric Brookfield runs agent teams in production: the operating model, five real evaluation systems with real numbers, the control surfaces that keep a long run from running away, and the failure that produced the rule.";
+---
+
+<Layout title="Practice — Eric Brookfield" description={description}>
+    <main class="practice">
+        <div class="container">
+            <header class="practice-header">
+                <a href="/" class="back-link">Back</a>
+                <h1>PRACTICE</h1>
+                <p class="lede">
+                    Every piece of agent work here runs through the same five
+                    steps: a spec, a structured ticket, an agent with a defined
+                    role, a validation gate, and a human review. Nothing skips
+                    the gate. Nothing ships on a green build alone — CI passing
+                    is necessary, it's never sufficient. The gate is where a
+                    human or a second agent checks the work against reality, not
+                    against the agent's own report of what it did.
+                </p>
+            </header>
+
+            <!-- ===== Operating model diagram =====
+                 Two hand-authored inline SVGs — wide for desktop, tall for
+                 narrow screens — swapped with a media query. No JS, no runtime
+                 Mermaid, and the viewBox fixes the aspect ratio so neither one
+                 shifts layout while it loads. Accent is spent only on the two
+                 return paths and the gate, because the loop back is the point
+                 of the diagram. -->
+            <figure class="diagram">
+                <svg
+                    class="diagram-wide"
+                    viewBox="0 0 1040 210"
+                    aria-hidden="true"
+                    focusable="false"
+                >
+                    <defs>
+                        <marker
+                            id="arrow-h-muted"
+                            viewBox="0 0 10 10"
+                            refX="9"
+                            refY="5"
+                            markerWidth="7"
+                            markerHeight="7"
+                            orient="auto-start-reverse"
+                        >
+                            <path d="M0,0 L10,5 L0,10 z" class="head-muted" />
+                        </marker>
+                        <marker
+                            id="arrow-h-accent"
+                            viewBox="0 0 10 10"
+                            refX="9"
+                            refY="5"
+                            markerWidth="7"
+                            markerHeight="7"
+                            orient="auto-start-reverse"
+                        >
+                            <path d="M0,0 L10,5 L0,10 z" class="head-accent" />
+                        </marker>
+                    </defs>
+
+                    <!-- happy path -->
+                    <path class="edge" d="M158,63 H172" marker-end="url(#arrow-h-muted)" />
+                    <path class="edge" d="M334,63 H348" marker-end="url(#arrow-h-muted)" />
+                    <path class="edge" d="M510,63 H524" marker-end="url(#arrow-h-muted)" />
+                    <path class="edge" d="M686,63 H700" marker-end="url(#arrow-h-muted)" />
+                    <path class="edge" d="M862,63 H876" marker-end="url(#arrow-h-muted)" />
+                    <text class="edge-label" x="695" y="30">pass</text>
+                    <text class="edge-label" x="871" y="30">approved</text>
+
+                    <!-- return paths -->
+                    <path
+                        class="edge-return"
+                        d="M607,86 V140 H441 V95"
+                        marker-end="url(#arrow-h-accent)"
+                    />
+                    <path
+                        class="edge-return"
+                        d="M783,86 V185 H421 V95"
+                        marker-end="url(#arrow-h-accent)"
+                    />
+                    <text class="edge-label-return" x="524" y="132">fail</text>
+                    <text class="edge-label-return" x="602" y="177">changes requested</text>
+
+                    <!-- nodes -->
+                    <rect class="node" x="0" y="40" width="158" height="46" />
+                    <text class="node-label" x="79" y="68">Spec</text>
+                    <rect class="node" x="176" y="40" width="158" height="46" />
+                    <text class="node-label" x="255" y="68">Structured ticket</text>
+                    <rect class="node" x="352" y="40" width="158" height="46" />
+                    <text class="node-label" x="431" y="68">Agent role</text>
+                    <rect class="node node-gate" x="528" y="40" width="158" height="46" />
+                    <text class="node-label" x="607" y="68">Validation gate</text>
+                    <rect class="node" x="704" y="40" width="158" height="46" />
+                    <text class="node-label" x="783" y="68">Human review</text>
+                    <rect class="node" x="880" y="40" width="158" height="46" />
+                    <text class="node-label" x="959" y="68">Done</text>
+                </svg>
+
+                <svg
+                    class="diagram-tall"
+                    viewBox="0 0 340 600"
+                    aria-hidden="true"
+                    focusable="false"
+                >
+                    <defs>
+                        <marker
+                            id="arrow-v-muted"
+                            viewBox="0 0 10 10"
+                            refX="9"
+                            refY="5"
+                            markerWidth="7"
+                            markerHeight="7"
+                            orient="auto-start-reverse"
+                        >
+                            <path d="M0,0 L10,5 L0,10 z" class="head-muted" />
+                        </marker>
+                        <marker
+                            id="arrow-v-accent"
+                            viewBox="0 0 10 10"
+                            refX="9"
+                            refY="5"
+                            markerWidth="7"
+                            markerHeight="7"
+                            orient="auto-start-reverse"
+                        >
+                            <path d="M0,0 L10,5 L0,10 z" class="head-accent" />
+                        </marker>
+                    </defs>
+
+                    <!-- happy path -->
+                    <path class="edge" d="M218,44 V99" marker-end="url(#arrow-v-muted)" />
+                    <path class="edge" d="M218,150 V205" marker-end="url(#arrow-v-muted)" />
+                    <path class="edge" d="M218,256 V311" marker-end="url(#arrow-v-muted)" />
+                    <path class="edge" d="M218,362 V417" marker-end="url(#arrow-v-muted)" />
+                    <path class="edge" d="M218,468 V523" marker-end="url(#arrow-v-muted)" />
+                    <text class="edge-label edge-label-start" x="230" y="396">pass</text>
+                    <text class="edge-label edge-label-start" x="230" y="502">approved</text>
+
+                    <!-- return paths -->
+                    <path
+                        class="edge-return"
+                        d="M104,340 H56 V240 H97"
+                        marker-end="url(#arrow-v-accent)"
+                    />
+                    <path
+                        class="edge-return"
+                        d="M104,446 H24 V228 H97"
+                        marker-end="url(#arrow-v-accent)"
+                    />
+                    <text class="edge-label-return" x="80" y="332">fail</text>
+                    <text class="edge-label-return diagram-tall-label" x="60" y="462">
+                        changes requested
+                    </text>
+
+                    <!-- nodes -->
+                    <rect class="node" x="104" y="0" width="228" height="44" />
+                    <text class="node-label" x="218" y="27">Spec</text>
+                    <rect class="node" x="104" y="106" width="228" height="44" />
+                    <text class="node-label" x="218" y="133">Structured ticket</text>
+                    <rect class="node" x="104" y="212" width="228" height="44" />
+                    <text class="node-label" x="218" y="239">Agent role</text>
+                    <rect class="node node-gate" x="104" y="318" width="228" height="44" />
+                    <text class="node-label" x="218" y="345">Validation gate</text>
+                    <rect class="node" x="104" y="424" width="228" height="44" />
+                    <text class="node-label" x="218" y="451">Human review</text>
+                    <rect class="node" x="104" y="530" width="228" height="44" />
+                    <text class="node-label" x="218" y="557">Done</text>
+                </svg>
+
+                <figcaption>
+                    Spec, structured ticket, agent role, validation gate, human
+                    review, done. A failed gate sends the work back to the
+                    agent; so does a review that asks for changes. Those two
+                    return paths are the only way out of the loop.
+                </figcaption>
+            </figure>
+
+            <!-- ===== Evaluation systems ===== -->
+            <section class="block" aria-labelledby="evaluation-systems">
+                <h2 class="section-head" id="evaluation-systems">
+                    Evaluation systems
+                </h2>
+                <p class="block-intro">
+                    Five real systems, real numbers, sourced from this company's
+                    own operating history. Each one lists where it came from.
+                </p>
+
+                <article class="entry">
+                    <p class="entry-source">BRO-966</p>
+                    <div class="entry-body">
+                        <h3>Model-swap evaluation matrix</h3>
+                        <p>
+                            Before swapping the model behind Argus's vision
+                            auto-tagging, I ran a live 5-model matrix against a
+                            golden set: tag recall, LLM-judge score, red-team
+                            pass rate, cost per run, latency. Total spend: $0.56.
+                        </p>
+
+                        <table class="matrix">
+                            <thead>
+                                <tr>
+                                    {evalMatrix.columns.map((col) => <th scope="col">{col}</th>)}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {
+                                    evalMatrix.rows.map((row) => (
+                                        <tr>
+                                            <th scope="row" data-label={evalMatrix.columns[0]}>
+                                                {row[0]}
+                                            </th>
+                                            {row.slice(1).map((cell, i) => (
+                                                <td data-label={evalMatrix.columns[i + 1]}>{cell}</td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                }
+                            </tbody>
+                        </table>
+
+                        <p>
+                            The challenger beat production on every axis at once:
+                            +10.7 points tag recall — above the run-to-run noise
+                            floor of roughly 7–8 points — 40% cheaper, four times
+                            faster. The quality-ceiling model scored highest but
+                            truncated its output at the production
+                            <code>max_tokens</code> cap of 1024 tokens, so it
+                            needed a contract change before it could ship. That's
+                            the kind of failure a spot-check misses and a
+                            fixed-threshold eval catches automatically.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="entry">
+                    <p class="entry-source">BRO-1009</p>
+                    <div class="entry-body">
+                        <h3>Four-gate build with an independent QC catch</h3>
+                        <p>
+                            A four-gate build ported a web app's surfaces to
+                            native macOS, one gate per surface, chained so no
+                            gate started until the one before it was approved.
+                            Test coverage grew 26 → 29 → 58 → 60 → 66 across the
+                            four gates. Every gate passed CI. One didn't pass
+                            review.
+                        </p>
+                        <p>
+                            On gate three, an independent QC pass — run from a
+                            clean checkout against the live production data, not
+                            against the ship comment — caught a data-parity
+                            defect invisible to both the tests and the visual
+                            render: the native app was grouping issues from a
+                            row-capped list and showing 132 issues where the
+                            source system showed 270. The fix was a scoped
+                            server-side fetch; the corrected count matched
+                            exactly at 269. The gate stayed blocked until an
+                            independent re-verification confirmed the fix, then a
+                            named human approved it.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="entry">
+                    <p class="entry-source">BRO-1010</p>
+                    <div class="entry-body">
+                        <h3>Weekly literature scan with a re-verify step</h3>
+                        <p>
+                            A weekly research routine scans for new evaluation
+                            papers and tooling — arXiv, plus tools like Inspect,
+                            promptfoo, Braintrust — and posts a digest. Two rules
+                            keep it honest: a strict quiet-week ceiling (5–8
+                            bullets is a maximum, not a quota — a thin week gets
+                            a one-line "nothing significant" instead of padding),
+                            and every claimed source gets independently
+                            re-verified before it's published, because a first
+                            pass through an external API silently returned empty
+                            results and would have shipped a false "not found" if
+                            I'd trusted it.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="entry">
+                    <p class="entry-source">CONTRIBUTING.md</p>
+                    <div class="entry-body">
+                        <h3>The merge gate rubric</h3>
+                        <p>
+                            Every pull request clears the same four-part test
+                            before an agent can merge it: CI is green, the work
+                            traces to a Founder-approved ticket within its
+                            approved scope, no unresolved review comments remain,
+                            and the change doesn't fall into a Founder-gated
+                            category. Auth and secrets, spend, public content,
+                            and data or schema changes are hard stops — no agent
+                            clears those, ever, regardless of how clean the diff
+                            looks. Everything else routes to the agent that owns
+                            the relevant judgment — a design call to the person
+                            who owns taste, an architecture call to the person
+                            who owns architecture — and that approval only counts
+                            once it's recorded as a decision on the ticket, not
+                            asserted in a comment.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="entry">
+                    <p class="entry-source">AGENTS.md</p>
+                    <div class="entry-body">
+                        <h3>One thing in flight, one model per task</h3>
+                        <p>
+                            Two standing constraints on how the work itself gets
+                            done, not just reviewed. First: one active build at a
+                            time per agent — a second task that comes in gets a
+                            one-line "queued behind [ticket]" and waits, because
+                            four concurrent sessions on one codebase contend for
+                            the same working tree and stall each other out rather
+                            than shipping faster. Second: a model-dispatch rule —
+                            the senior model is reserved for judgment calls
+                            (architecture, security, debugging), and mechanical
+                            work (file sweeps, formatting, running scripts) gets
+                            dispatched to a cheaper model explicitly. Ten or more
+                            consecutive mechanical tool calls on the senior model
+                            is a tripwire to stop and delegate.
+                        </p>
+                    </div>
+                </article>
+            </section>
+
+            <!-- ===== Control surfaces ===== -->
+            <section class="block" aria-labelledby="control-surfaces">
+                <h2 class="section-head" id="control-surfaces">Control surfaces</h2>
+                <p class="block-intro">
+                    The mechanisms that keep a long agent run from running away.
+                </p>
+                <dl class="surfaces">
+                    {
+                        controlSurfaces.map((surface) => (
+                            <div class="surface">
+                                <dt>{surface.term}</dt>
+                                <dd>{surface.body}</dd>
+                            </div>
+                        ))
+                    }
+                </dl>
+            </section>
+
+            <!-- ===== What went wrong ===== -->
+            <section class="block" aria-labelledby="what-went-wrong">
+                <h2 class="section-head" id="what-went-wrong">What went wrong</h2>
+                <div class="entry">
+                    <p class="entry-source">BRO-815 / BRO-820</p>
+                    <div class="entry-body">
+                        <p>
+                            Two builds were marked done because CI was green,
+                            while their pull requests were still open. One of
+                            them sat open long enough to drift into a merge
+                            conflict with the main branch before anyone noticed.
+                            Green CI had quietly become a stand-in for "done,"
+                            and it isn't the same thing — a PR can be fully green
+                            and still not be on the branch that ships.
+                        </p>
+                        <p>
+                            The fix wasn't a warning, it was a rule: done now
+                            means CI green <strong>and</strong> merged, checked
+                            explicitly, every time, before an agent can close a
+                            ticket. "Pushed," "CI green," and "merged" are three
+                            different states and none of them implies the next
+                            one. That rule now gates every piece of work
+                            described on this page.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== Article ===== -->
+            <aside class="field-report">
+                <p class="field-report-label">Field report</p>
+                <a
+                    href="/2026/03/28/i-stopped-prompting-ai-and-started-managing-it"
+                    class="field-report-link"
+                >
+                    I Stopped Prompting AI and Started Managing It
+                </a>
+            </aside>
+
+            <footer class="site-footer">
+                <div class="footer-grid">
+                    <a href="/">Home</a>
+                    <a href="mailto:eric@ericbrookfield.com">eric@ericbrookfield.com</a>
+                    <a href="https://brkdllc.com" target="_blank" rel="noopener">Brookfield Digital</a>
+                    <a href="https://github.com/ericdfields" target="_blank" rel="noopener">GitHub (@ericdfields)</a>
+                    <a href="https://linkedin.com/in/ericbrookfield" target="_blank" rel="noopener">LinkedIn</a>
+                </div>
+            </footer>
+        </div>
+    </main>
+</Layout>
+
+<style>
+    .practice {
+        padding: var(--spacing-xl) 0 0;
+    }
+
+    .practice .container {
+        max-width: 900px;
+    }
+
+    /* ====== HEADER ====== */
+    .back-link {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 2rem;
+    }
+
+    .back-link::before {
+        content: "← ";
+        color: var(--color-accent);
+    }
+
+    .back-link:hover {
+        color: var(--color-accent);
+    }
+
+    .practice-header h1 {
+        font-size: clamp(2.6rem, 9vw, 5.5rem);
+        line-height: 0.9;
+        letter-spacing: -0.04em;
+        text-transform: uppercase;
+        margin-bottom: 1.75rem;
+    }
+
+    .lede {
+        max-width: 62ch;
+        font-size: clamp(1rem, 1.35vw, 1.2rem);
+        line-height: 1.55;
+        color: var(--color-text);
+    }
+
+    /* ====== DIAGRAM ====== */
+    .diagram {
+        margin: var(--spacing-lg) 0 var(--spacing-xl);
+        padding: var(--spacing-md) 0;
+        border-top: 1px solid var(--color-rule);
+        border-bottom: 1px solid var(--color-rule);
+    }
+
+    /* Both toggles are class-on-class so they outrank a bare `.diagram svg`
+       type selector — the wide/tall swap silently failed when the base rule
+       carried `display` at higher specificity. */
+    .diagram svg {
+        width: 100%;
+        height: auto;
+    }
+
+    .diagram .diagram-wide {
+        display: block;
+    }
+
+    .diagram .diagram-tall {
+        display: none;
+    }
+
+    .node {
+        fill: none;
+        stroke: var(--color-rule-heavy);
+        stroke-width: 1;
+    }
+
+    .node-gate {
+        stroke: var(--color-accent);
+    }
+
+    .node-label {
+        fill: var(--color-text);
+        font-family: var(--font-mono);
+        font-size: 14px;
+        text-anchor: middle;
+    }
+
+    /* The tall diagram has a narrower viewBox, so it scales up more — hold the
+       label at the same optical size as the wide one. */
+    .diagram-tall .node-label {
+        font-size: 13px;
+    }
+
+    .edge {
+        fill: none;
+        stroke: var(--color-rule-heavy);
+        stroke-width: 1;
+    }
+
+    .edge-return {
+        fill: none;
+        stroke: var(--color-accent);
+        stroke-width: 1;
+    }
+
+    .head-muted {
+        fill: var(--color-rule-heavy);
+    }
+
+    .head-accent {
+        fill: var(--color-accent);
+    }
+
+    .edge-label,
+    .edge-label-return {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-anchor: middle;
+    }
+
+    .edge-label {
+        fill: var(--color-text-muted);
+    }
+
+    .edge-label-return {
+        fill: var(--color-accent);
+    }
+
+    .edge-label-start {
+        text-anchor: start;
+    }
+
+    .diagram-tall-label {
+        font-size: 10px;
+    }
+
+    figcaption {
+        margin-top: var(--spacing-md);
+        max-width: 58ch;
+        font-size: var(--text-small);
+        line-height: 1.6;
+        color: var(--color-text-muted);
+    }
+
+    /* ====== BLOCKS ====== */
+    .block {
+        padding-bottom: var(--spacing-xl);
+    }
+
+    .section-head {
+        font-size: var(--text-h2);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
+
+    .block-intro {
+        max-width: 58ch;
+        margin-bottom: var(--spacing-lg);
+        color: var(--color-text-muted);
+    }
+
+    /* Source rail: the citation sits beside the claim, mirroring the year rail
+       in the homepage's SHIPPED section. The page's argument is that every
+       number traces to something real, so the trace gets its own column. */
+    .entry {
+        display: grid;
+        grid-template-columns: clamp(6rem, 12vw, 9rem) 1fr;
+        gap: 2rem;
+        padding: var(--spacing-md) 0;
+        border-top: 1px solid var(--color-rule);
+    }
+
+    .entry-source {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        line-height: 1.6;
+        word-break: break-word;
+    }
+
+    .entry-body h3 {
+        font-size: 1.0625rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin-bottom: 0.75rem;
+    }
+
+    .entry-body p + p {
+        margin-top: 1rem;
+    }
+
+    .entry-body code {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+        color: var(--color-text);
+    }
+
+    .entry-body strong {
+        color: var(--color-text);
+        font-weight: 600;
+    }
+
+    /* ====== MATRIX TABLE ====== */
+    .matrix {
+        width: 100%;
+        margin: 1.5rem 0;
+        border-collapse: collapse;
+        font-size: var(--text-small);
+    }
+
+    .matrix th,
+    .matrix td {
+        padding: 0.6rem 0.75rem 0.6rem 0;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid var(--color-rule);
+    }
+
+    .matrix thead th {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--color-text-muted);
+        border-bottom-color: var(--color-rule-heavy);
+    }
+
+    .matrix tbody th {
+        font-weight: 600;
+        color: var(--color-text);
+    }
+
+    .matrix tbody td {
+        font-family: var(--font-mono);
+        color: var(--color-text-muted);
+    }
+
+    /* ====== CONTROL SURFACES ====== */
+    .surfaces {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .surface {
+        padding: var(--spacing-md) 0;
+        border-top: 1px solid var(--color-rule);
+    }
+
+    .surfaces dt {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.5rem;
+    }
+
+    .surfaces dd {
+        margin: 0;
+        max-width: 66ch;
+        color: var(--color-text-muted);
+        line-height: 1.65;
+    }
+
+    /* ====== FIELD REPORT ====== */
+    .field-report {
+        padding: var(--spacing-md) 0 var(--spacing-xl);
+        border-top: 1px solid var(--color-rule-heavy);
+    }
+
+    .field-report-label {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.5rem;
+    }
+
+    .field-report-link {
+        font-size: clamp(1.0625rem, 1.6vw, 1.35rem);
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--color-text);
+        border-bottom: 1px solid var(--color-rule-heavy);
+        padding-bottom: 2px;
+        transition:
+            color 0.15s ease,
+            border-color 0.15s ease;
+    }
+
+    .field-report-link:hover {
+        color: var(--color-accent);
+        border-color: var(--color-accent);
+    }
+
+    /* ====== FOOTER ====== */
+    .site-footer {
+        padding: var(--spacing-lg) 0;
+        border-top: 1px solid var(--color-rule);
+    }
+
+    .footer-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .footer-grid a {
+        color: var(--color-text-muted);
+    }
+
+    .footer-grid a:hover {
+        color: var(--color-accent);
+    }
+
+    /* ====== NARROW SCREENS ======
+       768px matches the breakpoint used by `.container` in Layout.astro and by
+       the homepage grid, so the whole site flips at one width. */
+    @media (max-width: 768px) {
+        .practice {
+            padding-top: var(--spacing-lg);
+        }
+
+        .diagram .diagram-wide {
+            display: none;
+        }
+
+        .diagram .diagram-tall {
+            display: block;
+        }
+
+        .entry {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        /* Matrix reflows to one labelled block per model — no sideways scroll. */
+        .matrix,
+        .matrix thead,
+        .matrix tbody,
+        .matrix tr,
+        .matrix th,
+        .matrix td {
+            display: block;
+        }
+
+        .matrix thead {
+            display: none;
+        }
+
+        .matrix tr {
+            padding: 0.85rem 0;
+            border-bottom: 1px solid var(--color-rule);
+        }
+
+        .matrix th,
+        .matrix td {
+            padding: 0;
+            border-bottom: none;
+        }
+
+        .matrix tbody th {
+            margin-bottom: 0.4rem;
+        }
+
+        .matrix tbody td {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.15rem 0;
+        }
+
+        .matrix tbody td::before {
+            content: attr(data-label);
+            font-family: var(--font-mono);
+            font-size: var(--text-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--color-text-muted);
+        }
+
+        .footer-grid {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+    }
+</style>
