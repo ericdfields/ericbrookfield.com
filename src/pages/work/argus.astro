@@ -1,0 +1,813 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { Image } from "astro:assets";
+import argusLibrary from "../../assets/work/argus-library.png";
+
+// Case-study copy is transcribed from the BRO-2025 content-draft document
+// (revision 9, approved by Eric 2026-08-11). Two blocks in that draft are
+// production notes rather than reader-facing copy and are deliberately not
+// rendered here: the pricing/metering "out of scope" note, and the line
+// recording that Eric supplied the screenshot — the screenshot itself is the
+// evidence, so it appears as a figure instead.
+//
+// Every Evidence row below was re-verified against the live product on
+// 2026-08-11 before shipping: argus.build renders "50k+ assets analyzed"
+// and "< 3s avg" on its homepage, and argus.build/docs documents the
+// pagination envelope and the MCP tool names quoted in the body.
+
+const description =
+    "Argus is a media asset catalog that reads an image the moment it lands — palette, mood, composition — and exposes the same asset graph over both a REST API and a hosted MCP server. A case study by Eric Brookfield.";
+---
+
+<Layout title="Argus — Case study — Eric Brookfield" description={description}>
+    <main class="case">
+        <div class="container">
+            <header class="case-header">
+                <a href="/work" class="back-link">Back to work</a>
+                <p class="eyebrow">Case study</p>
+                <h1>ARGUS</h1>
+                <p class="case-meta">
+                    <span>Solo build</span>
+                    <span class="meta-sep">/</span>
+                    <span>2026</span>
+                    <span class="meta-sep">/</span>
+                    <a href="https://argus.build" target="_blank" rel="noopener">argus.build</a>
+                </p>
+                <p class="lede">
+                    A media asset catalog that reads an image the moment it
+                    lands and writes down what's actually in it, so the search
+                    that follows is about meaning rather than filenames.
+                </p>
+            </header>
+
+            <!-- ===== 1. The problem ===== -->
+            <section class="block" aria-labelledby="problem">
+                <h2 class="section-head" id="problem">The problem</h2>
+                <div class="prose">
+                    <p>
+                        Every creative team ends up with the same problem, just
+                        at a different scale: a library of thousands of photos
+                        and graphics, sitting in folders named by date or by
+                        whoever exported them last, and no way to find "the
+                        warm, celebratory hero shot" inside that pile without
+                        opening every file by hand. Manual tagging is the fix
+                        everyone reaches for, and it's also the fix that never
+                        finishes — it's backlog work, and backlog work always
+                        loses to whatever shipped yesterday. What I wanted was
+                        something that reads an image the moment it lands and
+                        writes down what's actually in it — palette, mood,
+                        composition, visual language — so the search that
+                        follows is about meaning, not filenames.
+                    </p>
+                </div>
+            </section>
+
+            <!-- ===== 2. Constraints ===== -->
+            <section class="block" aria-labelledby="constraints">
+                <h2 class="section-head" id="constraints">Constraints</h2>
+                <div class="prose">
+                    <p>
+                        I built Argus alone, nights and weekends, around
+                        everything else — no team, no outside budget, nothing
+                        resembling a deadline. It started as an itch, not a
+                        roadmap item, and I think that shows in the decisions
+                        below: there was no one else in the room to weigh in,
+                        so each one got made once, and had to be right enough
+                        to live with.
+                    </p>
+                </div>
+            </section>
+
+            <!-- ===== 3. What I decided and why ===== -->
+            <section class="block" aria-labelledby="decisions">
+                <h2 class="section-head" id="decisions">What I decided and why</h2>
+                <div class="prose">
+                    <p>
+                        There's one decision here worth explaining, because
+                        from the outside it looks like foresight, and it really
+                        wasn't.
+                    </p>
+                    <h3 class="decision">
+                        Two API surfaces from day one — REST and MCP — instead
+                        of just one.
+                    </h3>
+                    <p>
+                        Argus exposes the same asset graph two ways: a REST API
+                        for anything that isn't an agent, and an MCP server at
+                        <code>argus.build/mcp</code> for Claude and other agents
+                        to call directly. I didn't build both because I'd mapped
+                        out some future where agents mattered more than scripts
+                        — I built both because I had two different use cases in
+                        mind at the same time, and testing them in parallel
+                        turned out to cost almost nothing, since they share the
+                        same test suite underneath. I still don't know which use
+                        case wins. Building both just meant I didn't have to
+                        decide yet.
+                    </p>
+                </div>
+            </section>
+
+            <!-- ===== 4. How it was built ===== -->
+            <section class="block" aria-labelledby="architecture">
+                <h2 class="section-head" id="architecture">How it was built</h2>
+                <div class="prose">
+                    <p>
+                        Here's how it actually works, mechanically. Upload
+                        triggers analysis asynchronously — the API hands back a
+                        response in under 3 seconds and the actual vision pass
+                        runs in the background, so the write path never blocks
+                        on a model call. Analysis results (palette, mood, tags)
+                        land in a searchable index; semantic queries like "warm,
+                        celebratory hero shot" run against that index and come
+                        back ranked by relevance rather than exact match.
+                        Authentication runs through two token types: long-lived
+                        <code>ak_</code>-prefixed API keys for normal
+                        integrations, and short-lived <code>at_</code>-prefixed
+                        agent session tokens that can't mint new keys or
+                        escalate privileges — a narrower blast radius for
+                        anything an agent is holding mid-transcript.
+                    </p>
+                    <h3 class="decision">The MCP server.</h3>
+                    <p>
+                        This is the piece other engineers will actually want
+                        detail on. It's a hosted endpoint at
+                        <code>argus.build/mcp</code>, not a local process — an
+                        agent connects to it the way it'd connect to any other
+                        MCP server, no separate SDK required. It exposes over 20
+                        tools — <code>search_assets</code>,
+                        <code>get_asset</code>, <code>upload_from_url</code>,
+                        <code>generate_style_guide</code>, and
+                        <code>adapt_svg_to_palette</code> among them — the same
+                        operations available over REST, just wrapped for
+                        tool-calling instead of HTTP verbs. That parity is the
+                        whole point of building both surfaces: an agent working
+                        through MCP and a script hitting REST are working
+                        against the identical asset graph, not two versions of
+                        the truth.
+                    </p>
+                </div>
+
+                <!-- ===== Architecture diagram =====
+                     Two hand-authored inline SVGs — wide for desktop, tall for
+                     narrow screens — swapped with the same 768px media query
+                     the rest of the site flips at. No JS, no runtime Mermaid;
+                     the viewBox fixes the aspect ratio so neither one shifts
+                     layout while it loads. Accent is spent only on the MCP
+                     branch, because that branch is the argument of the page. -->
+                <figure class="diagram">
+                    <svg
+                        class="diagram-wide"
+                        viewBox="0 0 900 440"
+                        aria-hidden="true"
+                        focusable="false"
+                    >
+                        <defs>
+                            <marker
+                                id="argus-arrow-muted"
+                                viewBox="0 0 10 10"
+                                refX="9"
+                                refY="5"
+                                markerWidth="7"
+                                markerHeight="7"
+                                orient="auto-start-reverse"
+                            >
+                                <path d="M0,0 L10,5 L0,10 z" class="head-muted" />
+                            </marker>
+                            <marker
+                                id="argus-arrow-accent"
+                                viewBox="0 0 10 10"
+                                refX="9"
+                                refY="5"
+                                markerWidth="7"
+                                markerHeight="7"
+                                orient="auto-start-reverse"
+                            >
+                                <path d="M0,0 L10,5 L0,10 z" class="head-accent" />
+                            </marker>
+                        </defs>
+
+                        <!-- ingest chain -->
+                        <path class="edge" d="M250,29 H286" marker-end="url(#argus-arrow-muted)" />
+                        <path class="edge" d="M570,29 H606" marker-end="url(#argus-arrow-muted)" />
+                        <path class="edge" d="M755,58 V110 H450 V146" marker-end="url(#argus-arrow-muted)" />
+
+                        <!-- fork: shared stem, then one branch per surface -->
+                        <path class="edge" d="M450,208 V240" />
+                        <path class="edge" d="M450,240 H190 V266" marker-end="url(#argus-arrow-muted)" />
+                        <path class="edge-accent" d="M450,240 H710 V266" marker-end="url(#argus-arrow-accent)" />
+                        <path class="edge" d="M190,328 V376" marker-end="url(#argus-arrow-muted)" />
+                        <path class="edge-accent" d="M710,328 V376" marker-end="url(#argus-arrow-accent)" />
+
+                        <!-- nodes -->
+                        <rect class="node" x="0" y="0" width="250" height="58" />
+                        <text class="node-label" x="125" y="35">Image uploaded</text>
+
+                        <rect class="node" x="290" y="0" width="280" height="58" />
+                        <text class="node-label" x="430" y="26">Claude vision analysis</text>
+                        <text class="node-sub" x="430" y="45">async, under 3s</text>
+
+                        <rect class="node" x="610" y="0" width="290" height="58" />
+                        <text class="node-label" x="755" y="26">Palette, mood, tags</text>
+                        <text class="node-sub" x="755" y="45">written to the index</text>
+
+                        <rect class="node" x="325" y="150" width="250" height="58" />
+                        <text class="node-label" x="450" y="185">Semantic search index</text>
+
+                        <rect class="node" x="65" y="270" width="250" height="58" />
+                        <text class="node-label" x="190" y="305">REST API</text>
+
+                        <rect class="node node-accent" x="585" y="270" width="250" height="58" />
+                        <text class="node-label" x="710" y="296">MCP server</text>
+                        <text class="node-sub" x="710" y="315">argus.build/mcp</text>
+
+                        <rect class="node" x="65" y="380" width="250" height="58" />
+                        <text class="node-label" x="190" y="415">Web app, scripts</text>
+
+                        <rect class="node" x="585" y="380" width="250" height="58" />
+                        <text class="node-label" x="710" y="415">Claude, other agents</text>
+                    </svg>
+
+                    <svg
+                        class="diagram-tall"
+                        viewBox="0 0 340 580"
+                        aria-hidden="true"
+                        focusable="false"
+                    >
+                        <defs>
+                            <marker
+                                id="argus-arrow-v-muted"
+                                viewBox="0 0 10 10"
+                                refX="9"
+                                refY="5"
+                                markerWidth="7"
+                                markerHeight="7"
+                                orient="auto-start-reverse"
+                            >
+                                <path d="M0,0 L10,5 L0,10 z" class="head-muted" />
+                            </marker>
+                            <marker
+                                id="argus-arrow-v-accent"
+                                viewBox="0 0 10 10"
+                                refX="9"
+                                refY="5"
+                                markerWidth="7"
+                                markerHeight="7"
+                                orient="auto-start-reverse"
+                            >
+                                <path d="M0,0 L10,5 L0,10 z" class="head-accent" />
+                            </marker>
+                        </defs>
+
+                        <path class="edge" d="M170,58 V94" marker-end="url(#argus-arrow-v-muted)" />
+                        <path class="edge" d="M170,156 V192" marker-end="url(#argus-arrow-v-muted)" />
+                        <path class="edge" d="M170,254 V290" marker-end="url(#argus-arrow-v-muted)" />
+
+                        <path class="edge" d="M170,352 V386" />
+                        <path class="edge" d="M170,386 H92 V412" marker-end="url(#argus-arrow-v-muted)" />
+                        <path class="edge-accent" d="M170,386 H247 V412" marker-end="url(#argus-arrow-v-accent)" />
+                        <path class="edge" d="M92,474 V510" marker-end="url(#argus-arrow-v-muted)" />
+                        <path class="edge-accent" d="M247,474 V510" marker-end="url(#argus-arrow-v-accent)" />
+
+                        <rect class="node" x="20" y="0" width="300" height="58" />
+                        <text class="node-label" x="170" y="35">Image uploaded</text>
+
+                        <rect class="node" x="20" y="98" width="300" height="58" />
+                        <text class="node-label" x="170" y="124">Claude vision analysis</text>
+                        <text class="node-sub" x="170" y="143">async, under 3s</text>
+
+                        <rect class="node" x="20" y="196" width="300" height="58" />
+                        <text class="node-label" x="170" y="222">Palette, mood, tags</text>
+                        <text class="node-sub" x="170" y="241">written to the index</text>
+
+                        <rect class="node" x="20" y="294" width="300" height="58" />
+                        <text class="node-label" x="170" y="329">Semantic search index</text>
+
+                        <rect class="node" x="20" y="416" width="145" height="58" />
+                        <text class="node-label node-label-narrow" x="92" y="450">REST API</text>
+
+                        <rect class="node node-accent" x="175" y="416" width="145" height="58" />
+                        <text class="node-label node-label-narrow" x="247" y="442">MCP server</text>
+                        <text class="node-sub node-sub-narrow" x="247" y="459">argus.build/mcp</text>
+
+                        <rect class="node" x="20" y="514" width="145" height="58" />
+                        <text class="node-label node-label-narrow" x="92" y="540">Web app,</text>
+                        <text class="node-label node-label-narrow" x="92" y="558">scripts</text>
+
+                        <rect class="node" x="175" y="514" width="145" height="58" />
+                        <text class="node-label node-label-narrow" x="247" y="540">Claude,</text>
+                        <text class="node-label node-label-narrow" x="247" y="558">other agents</text>
+                    </svg>
+
+                    <figcaption>
+                        An upload triggers a Claude vision pass in the
+                        background; palette, mood and tags land in the semantic
+                        search index. Both surfaces read the same index — the
+                        REST API for scripts and the web app, the MCP server for
+                        agents. The two branches are the same asset graph, not
+                        two versions of the truth.
+                    </figcaption>
+                </figure>
+            </section>
+
+            <!-- ===== 5. Evidence ===== -->
+            <section class="block" aria-labelledby="evidence">
+                <h2 class="section-head" id="evidence">Evidence</h2>
+                <p class="block-intro">
+                    Every claim above points at something you can go and check.
+                </p>
+
+                <figure class="shot">
+                    <Image
+                        src={argusLibrary}
+                        alt="The Argus library view at argus.build: a workspace switcher set to Brookfield Digital, a semantic search field, a left rail of color, view, sort, project, status and tag filters, and a grid of 347 analyzed assets sorted newest first."
+                        widths={[600, 900, 1800]}
+                        sizes="(max-width: 768px) 100vw, 860px"
+                        loading="lazy"
+                    />
+                    <figcaption>
+                        The real library view, not a mockup: the Brookfield
+                        Digital workspace with 347 analyzed assets, the semantic
+                        search field, and the color and tag filters those
+                        analyses populate.
+                    </figcaption>
+                </figure>
+
+                <div class="entry">
+                    <p class="entry-source">Live</p>
+                    <div class="entry-body">
+                        <p>
+                            <a href="https://argus.build" target="_blank" rel="noopener">argus.build</a>
+                            — the search, upload, and analysis flow described
+                            above is running today.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="entry">
+                    <p class="entry-source">Scale &amp; speed</p>
+                    <div class="entry-body">
+                        <p>
+                            50,000+ assets analyzed, under 3 seconds average
+                            analysis time — both figures are the product's own
+                            counters, published on the
+                            <a href="https://argus.build" target="_blank" rel="noopener">argus.build</a>
+                            homepage.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="entry">
+                    <p class="entry-source">Schema</p>
+                    <div class="entry-body">
+                        <p>
+                            Search and list endpoints return one pagination
+                            envelope, documented publicly rather than described:
+                        </p>
+                        <pre class="artifact"><code>GET /assets &rarr; &#123; total, limit, offset, hasMore, assets &#125;</code></pre>
+                        <p>
+                            The same shape backs the MCP
+                            <code>search_assets</code> tool. Full reference:
+                            <a href="https://argus.build/docs" target="_blank" rel="noopener">argus.build/docs</a>.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="entry">
+                    <p class="entry-source">BRO-1090</p>
+                    <div class="entry-body">
+                        <h3>An agent rebuilt a real deck through the MCP server</h3>
+                        <p>
+                            The acceptance gate for Argus's own Design Skills
+                            library was this: rebuild a real
+                            <a href="https://brkdllc.com" target="_blank" rel="noopener">brkdllc.com</a>
+                            deck end to end through the Argus MCP server, with
+                            zero hand-carried context.
+                            <code>get_brand_kit</code> pulled the real palette
+                            (<code>#FFFFFF</code>, <code>#111111</code>,
+                            <code>#DC2626</code>) and typography tokens.
+                            <code>search_assets</code> semantically matched five
+                            real cataloged images — hero, product demo,
+                            pricing, problem statement, for-builders — with no
+                            broken slots. The result was a 10-slide HTML deck
+                            with keyboard navigation, touch swipe, and print
+                            export, assembled by an agent rather than a human
+                            picking assets.
+                        </p>
+                        <p>
+                            That's the part I couldn't have predicted from the
+                            spec: Argus isn't only cataloging images, it's a
+                            brand kit an agent can build real deliverables from
+                            unassisted.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== 6. What I'd do differently ===== -->
+            <section class="block" aria-labelledby="differently">
+                <h2 class="section-head" id="differently">What I'd do differently</h2>
+                <div class="prose">
+                    <p>
+                        If I'm honest, there's nothing I'd change. Argus was
+                        never about shipping fast — it was about sitting with
+                        every piece of the problem long enough to actually
+                        understand it: what creative teams need from a tool like
+                        this, and just as importantly, what kills the experience
+                        when an agent gets it wrong.
+                    </p>
+                </div>
+            </section>
+
+            <aside class="next">
+                <a href="/work" class="next-link">More case studies</a>
+            </aside>
+
+            <footer class="site-footer">
+                <div class="footer-grid">
+                    <a href="/">Home</a>
+                    <a href="mailto:eric@ericbrookfield.com">eric@ericbrookfield.com</a>
+                    <a href="https://brkdllc.com" target="_blank" rel="noopener">Brookfield Digital</a>
+                    <a href="https://github.com/ericdfields" target="_blank" rel="noopener">GitHub (@ericdfields)</a>
+                    <a href="https://linkedin.com/in/ericbrookfield" target="_blank" rel="noopener">LinkedIn</a>
+                </div>
+            </footer>
+        </div>
+    </main>
+</Layout>
+
+<style>
+    .case {
+        padding: var(--spacing-xl) 0 0;
+    }
+
+    .case .container {
+        max-width: 900px;
+    }
+
+    /* ====== HEADER ====== */
+    .back-link {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 2rem;
+    }
+
+    .back-link::before {
+        content: "← ";
+        color: var(--color-accent);
+    }
+
+    .back-link:hover {
+        color: var(--color-accent);
+    }
+
+    .eyebrow {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-bottom: 0.75rem;
+    }
+
+    .case-header h1 {
+        font-size: clamp(2.6rem, 9vw, 5.5rem);
+        line-height: 0.9;
+        letter-spacing: -0.04em;
+        text-transform: uppercase;
+        margin-bottom: 1.25rem;
+    }
+
+    .case-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--color-text-muted);
+        margin-bottom: 1.75rem;
+    }
+
+    .case-meta a {
+        color: var(--color-text);
+        border-bottom: 1px solid var(--color-rule-heavy);
+    }
+
+    .case-meta a:hover {
+        color: var(--color-accent);
+        border-color: var(--color-accent);
+    }
+
+    .meta-sep {
+        color: var(--color-rule-heavy);
+    }
+
+    .lede {
+        max-width: 62ch;
+        font-size: clamp(1rem, 1.35vw, 1.2rem);
+        line-height: 1.55;
+        color: var(--color-text);
+    }
+
+    /* ====== BLOCKS ====== */
+    .block {
+        padding-top: var(--spacing-lg);
+        padding-bottom: var(--spacing-md);
+    }
+
+    .section-head {
+        font-size: var(--text-h2);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 1.25rem;
+    }
+
+    .block-intro {
+        max-width: 58ch;
+        margin-bottom: var(--spacing-md);
+        color: var(--color-text-muted);
+    }
+
+    .prose {
+        max-width: 66ch;
+    }
+
+    .prose p + p {
+        margin-top: 1.1rem;
+    }
+
+    .decision {
+        margin-top: 1.75rem;
+        margin-bottom: 0.75rem;
+        font-size: 1.0625rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.45;
+    }
+
+    /* Inline code carries long unbreakable identifiers (`adapt_svg_to_palette`
+       is 21 characters). `anywhere` only breaks them when the line genuinely
+       can't fit, which is the difference between an ugly wrap on a 320px phone
+       and a horizontal scrollbar on the document. */
+    code {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+        color: var(--color-text);
+        overflow-wrap: anywhere;
+    }
+
+    /* ====== DIAGRAM ====== */
+    .diagram {
+        margin: var(--spacing-lg) 0 var(--spacing-md);
+        padding: var(--spacing-md) 0;
+        border-top: 1px solid var(--color-rule);
+        border-bottom: 1px solid var(--color-rule);
+    }
+
+    /* Class-on-class so the wide/tall toggle outranks the bare `.diagram svg`
+       sizing rule — the same specificity trap Phase 1 hit on /practice. */
+    .diagram svg {
+        width: 100%;
+        height: auto;
+    }
+
+    .diagram .diagram-wide {
+        display: block;
+    }
+
+    .diagram .diagram-tall {
+        display: none;
+    }
+
+    .node {
+        fill: none;
+        stroke: var(--color-rule-heavy);
+        stroke-width: 1;
+    }
+
+    .node-accent {
+        stroke: var(--color-accent);
+    }
+
+    .node-label {
+        fill: var(--color-text);
+        font-family: var(--font-mono);
+        font-size: 14px;
+        text-anchor: middle;
+    }
+
+    .node-sub {
+        fill: var(--color-text-muted);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        text-anchor: middle;
+    }
+
+    /* The tall diagram scales up more (narrower viewBox), so hold the labels at
+       roughly the same optical size as the wide one. */
+    .diagram-tall .node-label {
+        font-size: 13px;
+    }
+
+    .diagram-tall .node-label-narrow {
+        font-size: 11px;
+    }
+
+    .diagram-tall .node-sub {
+        font-size: 10px;
+    }
+
+    .diagram-tall .node-sub-narrow {
+        font-size: 9px;
+    }
+
+    .edge {
+        fill: none;
+        stroke: var(--color-rule-heavy);
+        stroke-width: 1;
+    }
+
+    .edge-accent {
+        fill: none;
+        stroke: var(--color-accent);
+        stroke-width: 1;
+    }
+
+    .head-muted {
+        fill: var(--color-rule-heavy);
+    }
+
+    .head-accent {
+        fill: var(--color-accent);
+    }
+
+    figcaption {
+        margin-top: var(--spacing-md);
+        max-width: 58ch;
+        font-size: var(--text-small);
+        line-height: 1.6;
+        color: var(--color-text-muted);
+    }
+
+    /* ====== SCREENSHOT ======
+       Astro's <Image> emits intrinsic width/height, so the box is reserved
+       before the file lands and nothing reflows. */
+    .shot {
+        margin: 0 0 var(--spacing-lg);
+    }
+
+    .shot :global(img) {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--color-rule);
+    }
+
+    /* ====== EVIDENCE ENTRIES ======
+       Same source rail as /practice: the citation sits beside the claim. */
+    .entry {
+        display: grid;
+        grid-template-columns: clamp(6rem, 12vw, 9rem) 1fr;
+        gap: 2rem;
+        padding: var(--spacing-md) 0;
+        border-top: 1px solid var(--color-rule);
+    }
+
+    .entry:last-child {
+        border-bottom: 1px solid var(--color-rule);
+    }
+
+    .entry-source {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        line-height: 1.6;
+        word-break: break-word;
+    }
+
+    /* `min-width: 0` because a grid item defaults to `auto`, which floors at the
+       widest unbreakable child — without it the code artifact below stretches
+       the whole column and puts a horizontal scrollbar on the document at
+       375px instead of scrolling inside its own box. */
+    .entry-body {
+        max-width: 66ch;
+        min-width: 0;
+    }
+
+    .entry-body h3 {
+        font-size: 1.0625rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        margin-bottom: 0.75rem;
+    }
+
+    .entry-body p + p {
+        margin-top: 1rem;
+    }
+
+    .entry-body a {
+        color: var(--color-text);
+        border-bottom: 1px solid var(--color-rule-heavy);
+    }
+
+    .entry-body a:hover {
+        color: var(--color-accent);
+        border-color: var(--color-accent);
+    }
+
+    /* The one machine-readable artifact on the page. Scrolls inside its own box
+       on narrow screens rather than widening the document. */
+    .artifact {
+        margin: 1rem 0;
+        padding: 0.85rem 1rem;
+        border-left: 2px solid var(--color-accent);
+        background: rgba(227, 222, 212, 0.04);
+        overflow-x: auto;
+    }
+
+    .artifact code {
+        font-size: var(--text-small);
+        color: var(--color-text);
+        white-space: pre;
+    }
+
+    /* ====== NEXT ====== */
+    .next {
+        padding: var(--spacing-md) 0 var(--spacing-xl);
+        border-top: 1px solid var(--color-rule-heavy);
+    }
+
+    .next-link {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .next-link::after {
+        content: " →";
+        color: var(--color-accent);
+    }
+
+    .next-link:hover {
+        color: var(--color-accent);
+    }
+
+    /* ====== FOOTER ====== */
+    .site-footer {
+        padding: var(--spacing-lg) 0;
+        border-top: 1px solid var(--color-rule);
+    }
+
+    .footer-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .footer-grid a {
+        color: var(--color-text-muted);
+    }
+
+    .footer-grid a:hover {
+        color: var(--color-accent);
+    }
+
+    /* ====== NARROW SCREENS ====== */
+    @media (max-width: 768px) {
+        .case {
+            padding-top: var(--spacing-lg);
+        }
+
+        .diagram .diagram-wide {
+            display: none;
+        }
+
+        .diagram .diagram-tall {
+            display: block;
+        }
+
+        .entry {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .footer-grid {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+    }
+</style>

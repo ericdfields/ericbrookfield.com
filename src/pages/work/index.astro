@@ -1,0 +1,264 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+// Case-study index (BRO-2027, Phase 2 of the portfolio rebuild). Argus is the
+// first entry; the spec expects 3–4 total across Phase 2/3, so this page is
+// built as a list that reads correctly at n=1 and doesn't need restructuring
+// at n=4 — no grid of cards waiting to be filled, no "coming soon" slots.
+const caseStudies = [
+    {
+        year: "2026",
+        role: "Solo build",
+        name: "Argus",
+        href: "/work/argus",
+        summary:
+            "A media asset catalog that reads an image the moment it lands and writes down what's actually in it — palette, mood, composition — so the search that follows is about meaning, not filenames. Two API surfaces from day one: REST for scripts, and a hosted MCP server for agents.",
+        stack: "Claude vision analysis · Semantic search · MCP server · REST API",
+    },
+];
+
+const description =
+    "Case studies from Eric Brookfield: the problem, the constraints, what he decided and why, how it was built, the evidence, and what he'd do differently.";
+---
+
+<Layout title="Work — Eric Brookfield" description={description}>
+    <main class="work">
+        <div class="container">
+            <header class="work-header">
+                <a href="/" class="back-link">Back</a>
+                <h1>WORK</h1>
+                <p class="lede">
+                    Case studies, not a portfolio grid. Each one answers the
+                    same six questions in the same order: the problem, the
+                    constraints, what I decided and why, how it was built, the
+                    evidence, and what I'd do differently. Every claim points
+                    at something checkable — a live URL, a schema, a screenshot
+                    of the real interface.
+                </p>
+            </header>
+
+            <ol class="case-list">
+                {
+                    caseStudies.map((study) => (
+                        <li class="case">
+                            <div class="case-meta">
+                                <span class="case-year">{study.year}</span>
+                                <span class="case-role">{study.role}</span>
+                            </div>
+                            <div class="case-body">
+                                <h2>
+                                    <a href={study.href}>{study.name}</a>
+                                </h2>
+                                <p>{study.summary}</p>
+                                <p class="case-stack">{study.stack}</p>
+                            </div>
+                        </li>
+                    ))
+                }
+            </ol>
+
+            <aside class="elsewhere">
+                <p>
+                    Sixteen years of shipped work sits behind these — the full
+                    list is <a href="/#shipped">on the home page</a>, and the
+                    way any of it gets built is on <a href="/practice">practice</a>.
+                </p>
+            </aside>
+
+            <footer class="site-footer">
+                <div class="footer-grid">
+                    <a href="/">Home</a>
+                    <a href="mailto:eric@ericbrookfield.com">eric@ericbrookfield.com</a>
+                    <a href="https://brkdllc.com" target="_blank" rel="noopener">Brookfield Digital</a>
+                    <a href="https://github.com/ericdfields" target="_blank" rel="noopener">GitHub (@ericdfields)</a>
+                    <a href="https://linkedin.com/in/ericbrookfield" target="_blank" rel="noopener">LinkedIn</a>
+                </div>
+            </footer>
+        </div>
+    </main>
+</Layout>
+
+<style>
+    .work {
+        padding: var(--spacing-xl) 0 0;
+    }
+
+    .work .container {
+        max-width: 900px;
+    }
+
+    /* ====== HEADER ====== */
+    .back-link {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 2rem;
+    }
+
+    .back-link::before {
+        content: "← ";
+        color: var(--color-accent);
+    }
+
+    .back-link:hover {
+        color: var(--color-accent);
+    }
+
+    .work-header h1 {
+        font-size: clamp(2.6rem, 9vw, 5.5rem);
+        line-height: 0.9;
+        letter-spacing: -0.04em;
+        text-transform: uppercase;
+        margin-bottom: 1.75rem;
+    }
+
+    .lede {
+        max-width: 62ch;
+        font-size: clamp(1rem, 1.35vw, 1.2rem);
+        line-height: 1.55;
+        color: var(--color-text);
+    }
+
+    /* ====== CASE LIST ======
+       Same two-column rail as /practice's entries: metadata on the left, the
+       claim on the right. One entry reads as a list of one, not as an orphan. */
+    .case-list {
+        list-style: none;
+        margin: var(--spacing-xl) 0 var(--spacing-lg);
+        padding: 0;
+    }
+
+    .case {
+        display: grid;
+        grid-template-columns: clamp(6rem, 12vw, 9rem) 1fr;
+        gap: 2rem;
+        padding: var(--spacing-md) 0;
+        border-top: 1px solid var(--color-rule);
+    }
+
+    .case:last-child {
+        border-bottom: 1px solid var(--color-rule);
+    }
+
+    .case-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        line-height: 1.6;
+    }
+
+    .case-year {
+        color: var(--color-accent);
+    }
+
+    .case-role {
+        color: var(--color-text-muted);
+    }
+
+    .case-body h2 {
+        font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+        letter-spacing: -0.03em;
+        text-transform: uppercase;
+        margin-bottom: 0.75rem;
+    }
+
+    .case-body h2 a {
+        border-bottom: 1px solid var(--color-rule-heavy);
+        padding-bottom: 2px;
+        transition:
+            color 0.15s ease,
+            border-color 0.15s ease;
+    }
+
+    .case-body h2 a:hover {
+        color: var(--color-accent);
+        border-color: var(--color-accent);
+    }
+
+    .case-body p {
+        max-width: 62ch;
+    }
+
+    .case-stack {
+        margin-top: 0.85rem;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--color-text-muted);
+    }
+
+    /* ====== ELSEWHERE ====== */
+    .elsewhere {
+        padding: 0 0 var(--spacing-xl);
+    }
+
+    .elsewhere p {
+        max-width: 58ch;
+        font-size: var(--text-small);
+        line-height: 1.7;
+    }
+
+    .elsewhere a {
+        color: var(--color-text);
+        border-bottom: 1px solid var(--color-rule-heavy);
+    }
+
+    .elsewhere a:hover {
+        color: var(--color-accent);
+        border-color: var(--color-accent);
+    }
+
+    /* ====== FOOTER ====== */
+    .site-footer {
+        padding: var(--spacing-lg) 0;
+        border-top: 1px solid var(--color-rule);
+    }
+
+    .footer-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .footer-grid a {
+        color: var(--color-text-muted);
+    }
+
+    .footer-grid a:hover {
+        color: var(--color-accent);
+    }
+
+    /* ====== NARROW SCREENS ====== */
+    @media (max-width: 768px) {
+        .work {
+            padding-top: var(--spacing-lg);
+        }
+
+        .case {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .case-meta {
+            flex-direction: row;
+            gap: 0.75rem;
+        }
+
+        .footer-grid {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+    }
+</style>
