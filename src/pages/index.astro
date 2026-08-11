@@ -108,7 +108,34 @@ const shipped = [
                 </div>
                 <h1 class="name">ERIC<br/>BROOKFIELD<span class="period">.</span></h1>
                 <div class="identity-bio">
-                    <p>I'm a design engineer and applied-AI practitioner. I run a small fleet of AI agents that build and ship software — my job is direction, taste, and the last 10%. I write about agentic workflows as the shift happens.</p>
+                    <p>I design and build products, and I lead the teams who build them with me, people and AI agents both.</p>
+                </div>
+
+                <!-- Proof tiles (BRO-1890). Divided by the same hairline rules
+                     the editorial grid below uses — no cards, no boxes. -->
+                <div class="proof-grid">
+                    <a class="proof-tile" href="#shipped">
+                        <h2>I lead delivery across the full stack.</h2>
+                        <p>Eleven years shipping software under regulatory constraint — CRM platforms, e-commerce, clinical systems.</p>
+                        <span class="proof-link">What I've shipped</span>
+                    </a>
+                    <div class="proof-rule"></div>
+                    <a class="proof-tile" href="/practice">
+                        <h2>I direct agent teams in production.</h2>
+                        <p>Picket and Argus are live products built and run by agent teams I manage.</p>
+                        <span class="proof-link">This is how</span>
+                    </a>
+                    <div class="proof-rule"></div>
+                    <a class="proof-tile" href="/practice">
+                        <h2>I make quality verifiable, not asserted.</h2>
+                        <p>Every claim on this site traces to a real ticket, a real number, or a real gate.</p>
+                        <span class="proof-link">Here's the machinery</span>
+                    </a>
+                </div>
+
+                <div class="looking-for">
+                    <span class="looking-for-label">Looking for</span>
+                    <p>I'm looking to be part of teams who wish to build with credibility and passion while leveraging modern agentic tooling to solve novel design, engineering, and product problems.</p>
                 </div>
             </div>
         </header>
@@ -174,7 +201,7 @@ const shipped = [
         <div class="container"><hr class="rule" /></div>
 
         <!-- Shipped Section -->
-        <section class="shipped">
+        <section class="shipped" id="shipped">
             <div class="container">
                 <h2 class="shipped-head">SHIPPED</h2>
                 <div class="shipped-timeline">
@@ -260,9 +287,99 @@ const shipped = [
         max-width: 520px;
     }
 
+    .identity-bio {
+        max-width: 640px;
+    }
+
     .identity-bio p {
+        font-size: clamp(1.0625rem, 1.5vw, 1.35rem);
+        line-height: 1.5;
+        letter-spacing: -0.01em;
+        color: var(--color-text);
+    }
+
+    /* ====== PROOF TILES ====== */
+    .proof-grid {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr 1px 1fr;
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-lg);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--color-rule);
+    }
+
+    .proof-rule {
+        background: var(--color-rule);
+        width: 1px;
+    }
+
+    .proof-tile {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .proof-tile h2 {
+        font-size: 1.0625rem;
+        font-weight: 600;
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+        color: var(--color-text);
+    }
+
+    .proof-tile p {
+        font-size: var(--text-small);
+        line-height: 1.55;
+        color: var(--color-text-muted);
+    }
+
+    .proof-link {
+        margin-top: auto;
+        padding-top: 0.5rem;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .proof-link::after {
+        content: " →";
+        display: inline-block;
+        transition: transform 0.15s ease;
+    }
+
+    .proof-tile:hover h2 {
+        color: var(--color-accent);
+    }
+
+    .proof-tile:hover .proof-link::after {
+        transform: translateX(3px);
+    }
+
+    /* ====== LOOKING FOR ====== */
+    .looking-for {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        max-width: 640px;
+        margin-top: var(--spacing-lg);
+    }
+
+    .looking-for-label {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 500;
+    }
+
+    .looking-for p {
         font-size: var(--text-body);
-        line-height: 1.6;
+        line-height: 1.55;
         color: var(--color-text-muted);
     }
 
@@ -573,6 +690,16 @@ const shipped = [
         .editorial-grid {
             grid-template-columns: 1fr;
             gap: var(--spacing-md);
+        }
+
+        .proof-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .proof-rule {
+            width: auto;
+            height: 1px;
         }
 
         .col-rule {

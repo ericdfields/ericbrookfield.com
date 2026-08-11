@@ -186,6 +186,27 @@ const structuredData = [
         color: var(--color-accent);
     }
 
+    /* Keyboard focus was previously invisible sitewide — every interactive
+       element now shows the accent ring on keyboard navigation only (BRO-1890). */
+    a:focus-visible,
+    button:focus-visible,
+    [tabindex]:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 3px;
+    }
+
+    /* Respect reduced-motion for every transition and animation on the site. */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+
     .container {
         max-width: var(--max-width);
         margin: 0 auto;
