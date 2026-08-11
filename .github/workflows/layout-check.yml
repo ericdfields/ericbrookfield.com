@@ -1,0 +1,38 @@
+# Layout smoke check (BRO-2027). Turns the portfolio acceptance criterion
+# "no horizontal scroll at 375px" into something CI enforces on every PR,
+# instead of something a reviewer has to remember to eyeball.
+name: Layout check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  layout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # astro 6 requires Node >=22.12.0 — matches deploy.yml (BRO-910/BRO-854)
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run build
+
+      - name: Serve the built site and check every route
+        run: |
+          npx astro preview --port 4321 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4321/ > /dev/null && break
+            sleep 1
+          done
+          npm run check:layout -- http://localhost:4321
