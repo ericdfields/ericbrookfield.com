@@ -11,18 +11,50 @@
  * Usage:  node scripts/check-layout.mjs [baseUrl]
  * Assumes a server is already serving the built site (`astro preview`).
  */
+import { readdirSync } from "node:fs";
+import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
 const BASE = process.argv[2] ?? "http://localhost:4321";
 
-const ROUTES = [
-    "/",
-    "/work/",
-    "/work/argus/",
-    "/practice/",
-    "/archive/",
-    "/timeline/",
-];
+const PAGES_DIR = fileURLToPath(new URL("../src/pages", import.meta.url));
+
+/**
+ * Routes are derived from `src/pages`, not listed by hand (BRO-2055 category
+ * safeguard). The hardcoded list meant a new page was only covered if whoever
+ * added it also remembered to add it here — a check that silently skips the
+ * one page most likely to be broken is worse than no check.
+ *
+ * Only static `.astro` pages are walked: `.js`/`.ts` files are endpoints (RSS,
+ * OG images) with no layout to measure, and `[...slug]` routes need real params
+ * to resolve. Blog posts render through `[...slug].astro`, so their shared
+ * layout is exercised by the static pages that use the same tokens.
+ */
+function collectRoutes(dir) {
+    const routes = [];
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name.startsWith("[")) continue;
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+            routes.push(...collectRoutes(full));
+            continue;
+        }
+        if (!entry.name.endsWith(".astro")) continue;
+        const rel = relative(PAGES_DIR, full).replace(/\.astro$/, "");
+        routes.push(rel === "index" ? "/" : `/${rel.replace(/\/index$/, "")}/`);
+    }
+    return routes;
+}
+
+const ROUTES = collectRoutes(PAGES_DIR).sort();
+
+if (!ROUTES.length) {
+    console.error(`Layout check found no routes under ${PAGES_DIR}`);
+    process.exit(1);
+}
+
+console.log(`Checking ${ROUTES.length} routes: ${ROUTES.join(" ")}`);
 
 // 375 is the acceptance width; the other two are the "readable at" widths.
 const VIEWPORTS = [
