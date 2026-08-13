@@ -1,0 +1,460 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+// Portfolio Phase 4 (BRO-2055). Copy is the QC-approved draft from BRO-2054 —
+// every claim on this page traces to /work, /practice, or the homepage shipped
+// list, and nothing here was invented for it. Deliberately not folded into
+// /work: that route is reserved for the case-study format ("the same six
+// questions in the same order"), and this is a pitch, not a case study.
+//
+// No new visual language. Everything below is the homepage/`/work` vocabulary:
+// mono meta labels, hairline rules between sections, and the homepage
+// proof-tile pattern (assertion → evidence → link to the receipt).
+
+const forYou = [
+    "You have a real, messy problem — a regulated system, a team that isn't telling you what's actually happening, a build nobody wants to touch — and you want someone who names it plainly before proposing anything.",
+    "You're trying to figure out whether AI-agent-directed delivery is real or a slide deck. I run it in production, not in a demo.",
+    "You want the person doing the work to also be the person who tells you when the timeline or the approach is wrong — before it costs you the budget.",
+];
+
+const notForYou = [
+    "You want agreement instead of a diagnosis. I'll tell you when a plan won't work, in the room, before anyone's spent money on it.",
+    "You're shopping for the cheapest hands available. I'm not the fastest keyboard in the building; I'm the one who tells you which build not to start.",
+    "You want a black box. What I ship — including what breaks — ends up written down somewhere you can read it. If you'd rather no one kept a paper trail, this isn't a fit.",
+];
+
+const description =
+    "A direct pitch for hiring or engaging Eric Brookfield — who this is for, who it isn't for, and the receipts behind every claim.";
+---
+
+<Layout title="Work with me — Eric Brookfield" description={description}>
+    <main class="wwm">
+        <div class="container">
+            <header class="wwm-header">
+                <a href="/" class="back-link">Back</a>
+                <p class="eyebrow">For hiring managers &amp; founders</p>
+                <h1>
+                    <span class="h1-line">I'll tell you the truth.</span>{" "}
+                    <span class="h1-line">I can also prove it.</span>
+                </h1>
+                <p class="lede">
+                    A direct pitch for hiring or engaging me — not a resume, not
+                    a highlight reel. Every claim on this page points at
+                    something you can check.
+                </p>
+            </header>
+
+            <hr class="rule" />
+
+            <section class="block" aria-labelledby="who-this-is-for">
+                <p class="block-label">Read this first</p>
+                <h2 class="section-head" id="who-this-is-for">
+                    Who this is for
+                </h2>
+
+                <div class="fit-grid">
+                    <div class="fit-col">
+                        <p class="fit-label fit-label-yes">For you, if</p>
+                        <ul class="fit-list">
+                            {forYou.map((item) => <li>{item}</li>)}
+                        </ul>
+                    </div>
+                    <div class="col-rule"></div>
+                    <div class="fit-col">
+                        <p class="fit-label">Not for you, if</p>
+                        <ul class="fit-list">
+                            {notForYou.map((item) => <li>{item}</li>)}
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <hr class="rule" />
+
+            <section class="block" aria-labelledby="why-trust-the-honesty">
+                <p class="block-label">The receipts</p>
+                <h2 class="section-head" id="why-trust-the-honesty">
+                    Why trust the honesty
+                </h2>
+
+                <div class="proof-grid">
+                    <a class="proof-tile" href="/work">
+                        <h3>I've shipped inside constraints that punish sloppy honesty.</h3>
+                        <p>
+                            Eleven years building CRM, e-commerce, and clinical
+                            systems under regulatory constraint — the kind of
+                            environment where "it's fine" has to be true, not
+                            just said.
+                        </p>
+                        <span class="proof-link">See the work</span>
+                    </a>
+                    <div class="proof-rule"></div>
+                    <a class="proof-tile" href="/practice">
+                        <h3>I run agent teams in production, not in a pitch deck.</h3>
+                        <p>
+                            Picket and Argus are live products built and
+                            directed by agent teams I manage today — not a proof
+                            of concept.
+                        </p>
+                        <span class="proof-link">This is how</span>
+                    </a>
+                    <div class="proof-rule"></div>
+                    <!-- The `#what-went-wrong` anchor already exists on
+                         /practice (verified in BRO-2056) — nothing to add there. -->
+                    <a class="proof-tile" href="/practice#what-went-wrong">
+                        <h3>When something breaks, I write down what broke.</h3>
+                        <p>
+                            Two builds once got marked "done" because CI was
+                            green while the pull request was still open. I turned
+                            that into a rule — done means green <em>and</em>
+                            merged, checked every time — and it's posted on the
+                            site, not scrubbed from it.
+                        </p>
+                        <span class="proof-link">Read the rule</span>
+                    </a>
+                </div>
+            </section>
+
+            <hr class="rule" />
+
+            <section class="block" aria-labelledby="the-corporate-game-part">
+                <p class="block-label">And the other half</p>
+                <h2 class="section-head" id="the-corporate-game-part">
+                    The corporate-game part
+                </h2>
+                <p class="statement">
+                    Here's the part that isn't just directness: I know how to sit
+                    in the room, hit the deadline, and not blow up the
+                    relationship when the diagnosis is unwelcome. Eleven years
+                    inside a regulated pharma company teaches you that fast — you
+                    don't get to just be right, you have to be right in a way
+                    legal, a VP, and a regulator can all still work with. That's
+                    the muscle underneath the honesty above. It didn't cost me
+                    the enterprise credibility. It's why I still have it.
+                </p>
+            </section>
+
+            <hr class="rule" />
+
+            <section class="block block-close" aria-labelledby="send-me-the-problem">
+                <p class="block-label">Next</p>
+                <h2 class="section-head" id="send-me-the-problem">
+                    Send me the problem.
+                </h2>
+                <p class="close-copy">
+                    Tell me what's actually going on — not the polished version.
+                    I'll tell you plainly whether I'm the right person for it,
+                    and if I'm not, I'll say that too.
+                </p>
+                <a class="cta" href="mailto:eric@ericbrookfield.com">
+                    Email eric@ericbrookfield.com
+                </a>
+            </section>
+
+            <footer class="site-footer">
+                <div class="footer-grid">
+                    <a href="/">Home</a>
+                    <a href="mailto:eric@ericbrookfield.com">eric@ericbrookfield.com</a>
+                    <a href="https://brkdllc.com" target="_blank" rel="noopener">Brookfield Digital</a>
+                    <a href="https://github.com/ericdfields" target="_blank" rel="noopener">GitHub (@ericdfields)</a>
+                    <a href="https://linkedin.com/in/ericbrookfield" target="_blank" rel="noopener">LinkedIn</a>
+                </div>
+            </footer>
+        </div>
+    </main>
+</Layout>
+
+<style>
+    .wwm {
+        padding: var(--spacing-xl) 0 0;
+    }
+
+    /* Same reading measure as /work and /practice — one content-page width
+       across the site. */
+    .wwm .container {
+        max-width: 900px;
+    }
+
+    /* ====== HEADER ====== */
+    .back-link {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 2rem;
+    }
+
+    .back-link::before {
+        content: "← ";
+        color: var(--color-accent);
+    }
+
+    .back-link:hover {
+        color: var(--color-accent);
+    }
+
+    .eyebrow {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 1rem;
+    }
+
+    .wwm-header h1 {
+        font-size: var(--text-h1);
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+        margin-bottom: 1.75rem;
+    }
+
+    /* The headline is two sentences. Making each one an inline-block means the
+       line can only ever break at the sentence boundary — never mid-clause —
+       whatever the viewport does to the measure. */
+    .h1-line {
+        display: inline-block;
+    }
+
+    .lede {
+        max-width: 62ch;
+        font-size: clamp(1rem, 1.35vw, 1.2rem);
+        line-height: 1.55;
+        color: var(--color-text);
+        /* The first hairline follows immediately in the flow; without this the
+           rule crowds the lede's descenders. */
+        padding-bottom: var(--spacing-lg);
+    }
+
+    /* ====== RULES / BLOCKS ====== */
+    .rule {
+        border: none;
+        height: 1px;
+        background: var(--color-rule);
+        margin: 0;
+    }
+
+    .block {
+        padding: var(--spacing-lg) 0;
+    }
+
+    .block-label {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .section-head {
+        font-size: var(--text-h2);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: var(--spacing-md);
+    }
+
+    /* ====== WHO THIS IS FOR ====== */
+    .fit-grid {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .col-rule {
+        background: var(--color-rule);
+        width: 1px;
+    }
+
+    .fit-label {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .fit-label-yes {
+        color: var(--color-text);
+    }
+
+    .fit-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .fit-list li {
+        padding: 0.85rem 0;
+        border-top: 1px solid var(--color-rule);
+        font-size: var(--text-body);
+        line-height: 1.6;
+        color: var(--color-text-muted);
+    }
+
+    /* ====== THE RECEIPTS ======
+       Homepage proof-tile pattern, unchanged: assertion, evidence, link. */
+    .proof-grid {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr 1px 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .proof-rule {
+        background: var(--color-rule);
+        width: 1px;
+    }
+
+    .proof-tile {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .proof-tile h3 {
+        font-size: 1.0625rem;
+        font-weight: 600;
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+        color: var(--color-text);
+    }
+
+    .proof-tile p {
+        font-size: var(--text-small);
+        line-height: 1.55;
+        color: var(--color-text-muted);
+    }
+
+    .proof-tile em {
+        font-style: normal;
+        color: var(--color-text);
+    }
+
+    .proof-link {
+        margin-top: auto;
+        padding-top: 0.5rem;
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .proof-link::after {
+        content: " →";
+        display: inline-block;
+        transition: transform 0.15s ease;
+    }
+
+    .proof-tile:hover h3 {
+        color: var(--color-accent);
+    }
+
+    .proof-tile:hover .proof-link::after {
+        transform: translateX(3px);
+    }
+
+    /* ====== THE CORPORATE-GAME PART ====== */
+    .statement {
+        max-width: 66ch;
+        font-size: clamp(1rem, 1.3vw, 1.15rem);
+        line-height: 1.6;
+        color: var(--color-text);
+    }
+
+    /* ====== CLOSE ====== */
+    .block-close {
+        padding-bottom: var(--spacing-xl);
+    }
+
+    .close-copy {
+        max-width: 58ch;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .cta {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: var(--text-small);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--color-text);
+        border-bottom: 1px solid var(--color-rule-heavy);
+        padding-bottom: 4px;
+        transition:
+            color 0.15s ease,
+            border-color 0.15s ease;
+    }
+
+    .cta::after {
+        content: " →";
+        display: inline-block;
+        transition: transform 0.15s ease;
+    }
+
+    .cta:hover {
+        color: var(--color-accent);
+        border-color: var(--color-accent);
+    }
+
+    .cta:hover::after {
+        transform: translateX(3px);
+    }
+
+    /* ====== FOOTER ====== */
+    .site-footer {
+        padding: var(--spacing-lg) 0;
+        border-top: 1px solid var(--color-rule);
+    }
+
+    .footer-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .footer-grid a {
+        color: var(--color-text-muted);
+    }
+
+    .footer-grid a:hover {
+        color: var(--color-accent);
+    }
+
+    /* ====== NARROW SCREENS ======
+       768px is the sitewide flip: same breakpoint as `.container` in
+       Layout.astro, the homepage grid, /work, and /practice. */
+    @media (max-width: 768px) {
+        .wwm {
+            padding-top: var(--spacing-lg);
+        }
+
+        .fit-grid,
+        .proof-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .col-rule,
+        .proof-rule {
+            width: auto;
+            height: 1px;
+        }
+
+        .footer-grid {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+    }
+</style>
