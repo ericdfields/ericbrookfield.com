@@ -1,0 +1,420 @@
+# merge-on-approval — the last-mile step that turns "CI green + approved"
+# into an actual merge, with no human clicking through the GitHub merge button.
+#
+# ⚠️ GENERATED FILE — DO NOT EDIT IN PLACE. ⚠️
+# Source of truth: ericdfields/brookfield-digital-os
+#   scripts/merge-gate/workflow.template.yml  (this workflow)
+#   .github/scripts/merge-decision.js         (the decision core, inlined below)
+#   scripts/merge-gate/repos.json             (per-repo required checks)
+# Regenerate with `node scripts/merge-gate/build.mjs`; `audit.mjs` fails if any
+# installed copy drifts from what the template renders. Edit the template, not
+# the copy — a hand-edit here is reverted by the next sync and, worse, is
+# invisible to the audit until then.
+#
+# Why vendored into every repo instead of a cross-repo reusable `uses:`
+# (BRO-2024): `brookfield-digital-os` is PRIVATE and several target repos
+# (ericbrookfield.com, brkdllc.com) are PUBLIC. A public repo cannot call a
+# reusable workflow out of a private one, and the failure is a workflow that
+# never runs — the exact silent-inertness this file exists to fix. Vendoring
+# has no cross-repo runtime dependency and follows the precedent already set by
+# verified-done.yml.
+#
+# Why this exists (BRO-1694 / BRO-1695): the fleet's definition of "done" ended
+# at `gh pr create`. CI went green, the authoring session ended, and merge state
+# lived only in GitHub — which no fleet component read back from. 15 PRs rotted;
+# 6 of them decayed into merge conflicts. Diagnosis confirmed two structural
+# walls: (1) every PR is authored by `ericdfields`, the same account Eric would
+# review with, so GitHub hard-blocks self-approval and no `pull_request_review`
+# mechanism can ever fire; (2) private user repos can't use branch protection /
+# CODEOWNERS / native auto-merge without a paid plan.
+#
+# The one approval primitive Eric CAN emit on his own PR is a LABEL. So the
+# contract is: applying the `founder-approved` label == "merge this, no question"
+# (Eric's standing policy). This workflow is the deterministic executor of that
+# policy — no LLM in the merge path, runs on GitHub infra (survives laptop sleep
+# and agent outages).
+#
+# BRO-1842 added a SECOND arming label, `review-passed`. On that issue a PR sat
+# green, twice-approved, and MERGEABLE/CLEAN for two hours because the rules gave
+# agents no way to finish. `review-passed` is the CEO's label, applied on final
+# review-gate approval when the Merge Gate Rubric (CONTRIBUTING.md) clears the
+# change. `founder-approved` is unchanged and still Founder-only. Either arms the
+# merge; the merge comment records WHICH, permanently.
+#
+# The merge gates on THREE conditions, all required:
+#   1. an arming label is present (`founder-approved` OR `review-passed`), AND
+#   2. every check in REQUIRED_CHECKS is a completed success on the head commit, AND
+#   3. the PR is mergeable (no conflicts).
+#
+# The decision itself lives in .github/scripts/merge-decision.js in the source
+# repo — a pure, unit-tested module, inlined verbatim below by the generator. A
+# test asserts the inlined copy still decides identically to the module, so the
+# one piece that can silently deadlock every merge in the repo is covered by
+# tests rather than buried in this YAML.
+#
+# On a new push after approval (`synchronize`) the label is stripped, forcing
+# re-approval of the new code. A scheduled sweep is the backstop: it re-checks
+# every labeled-but-not-yet-merged PR (e.g. one labeled while CI was still
+# running) and emits a digest to the run summary.
+#
+# SECURITY / AUDIT: because agents and Eric share the `ericdfields` account, an
+# agent is technically capable of applying this label. That is PROHIBITED
+# (see CONTRIBUTING.md, The Two Merge Labels). Every merge is commented with the labeling actor + timestamp
+# so misuse is auditable after the fact.
+#
+# merge-gate-repo: ericdfields/ericbrookfield.com
+# merge-gate-version: be4b8f0b3b17
+
+name: merge-on-approval
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+  schedule:
+    - cron: "*/30 * * * *" # backstop sweep for PRs labeled while CI was still running
+  workflow_dispatch: # manual kick, useful for testing the sweep path
+
+permissions:
+  contents: write # merge + delete branch
+  pull-requests: write # merge, comment, manage labels
+  issues: write # label management goes through the issues API
+  checks: read # read the required-check conclusions
+
+concurrency:
+  # One in-flight run per PR (event path) or per sweep (schedule path). Never
+  # cancel an in-progress run — a cancelled run mid-merge would be confusing.
+  group: merge-on-approval-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      # No checkout: the decision core is inlined below so this workflow is a
+      # single self-contained file that can be dropped into any repo.
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            // ---- BEGIN inlined .github/scripts/merge-decision.js ----------------
+            // Pure decision core for merge-on-approval. No network, no Octokit, no clock —
+            // every input is passed in so the whole thing is unit-testable.
+            //
+            // THIS FILE IS THE SOURCE OF TRUTH for every repo's merge gate (BRO-2024).
+            // scripts/merge-gate/build.mjs inlines it verbatim into the workflow it renders
+            // for each repo in scripts/merge-gate/repos.json, so a change here reaches all
+            // of them — but only once they are regenerated and the PRs land. After editing:
+            //   node --test .github/scripts/merge-decision.test.js   # still correct?
+            //   node scripts/merge-gate/build.mjs --write-self       # refresh this repo
+            //   node scripts/merge-gate/audit.mjs                    # who has drifted?
+            // Manual mirroring is no longer a thing; an earlier revision of this comment
+            // asked for a hand-copy into ericdfields/argus, and that is what the generator
+            // replaces.
+
+            /**
+             * Resolve one check by name, preferring the most recently started run.
+             * GitHub appends a new check run per re-run attempt, so the first match may be
+             * a stale failure that a passing re-run has already superseded.
+             */
+            function latestRun(checkRuns, name) {
+              const runs = checkRuns.filter((c) => c.name === name);
+              if (runs.length === 0) return null;
+              return runs.reduce((newest, c) =>
+                Date.parse(c.started_at || 0) >= Date.parse(newest.started_at || 0) ? c : newest,
+              );
+            }
+
+            function decideMerge(input) {
+              const {
+                merged, state, mergeable, labels, checkRuns,
+                approvalLabels, requiredChecks,
+                labelAppliedAtMs, nowMs, stallAfterMs,
+              } = input;
+
+              const nothing = { armedBy: null, missingChecks: [], failedChecks: [] };
+
+              if (merged) return { action: "already-merged", reason: "already merged", ...nothing };
+              if (state !== "open") return { action: "closed", reason: `PR is ${state}`, ...nothing };
+
+              const armedBy = approvalLabels.find((l) => labels.includes(l)) || null;
+              if (!armedBy) return { action: "no-label", reason: "no arming label", ...nothing };
+
+              const missingChecks = [];
+              const failedChecks = [];
+              let pending = 0;
+
+              for (const name of requiredChecks) {
+                const run = latestRun(checkRuns, name);
+                if (!run) missingChecks.push(name);
+                else if (run.status !== "completed") pending++;
+                else if (run.conclusion !== "success") failedChecks.push(name);
+              }
+
+              const common = { armedBy, missingChecks, failedChecks };
+
+              // A red check is a normal outcome the author owns — report it and stop.
+              if (failedChecks.length) {
+                return { action: "blocked-checks", reason: `failing: ${failedChecks.join(", ")}`, ...common };
+              }
+
+              if (missingChecks.length || pending) {
+                // Absent is not the same as failing. A check that never appears is an
+                // infrastructure fault (BRO-1863), and its signature is silence — so once
+                // the window closes, say so out loud instead of waiting forever.
+                const stalled =
+                  missingChecks.length > 0 &&
+                  labelAppliedAtMs !== null &&
+                  nowMs - labelAppliedAtMs >= stallAfterMs;
+
+                if (stalled) {
+                  return {
+                    action: "stalled-checks",
+                    reason: `no run reported for ${missingChecks.join(", ")} in ${Math.round(stallAfterMs / 3600_000)}h`,
+                    ...common,
+                  };
+                }
+                const waiting = [...missingChecks.map((c) => `${c} (no run yet)`), ...(pending ? [`${pending} still running`] : [])];
+                return { action: "wait-checks", reason: `waiting on ${waiting.join(", ")}`, ...common };
+              }
+
+              if (mergeable === false) return { action: "blocked-conflict", reason: "conflicts with base", ...common };
+              if (mergeable === null) return { action: "wait-mergeability", reason: "mergeability not computed yet", ...common };
+
+              return { action: "merge", reason: "all required checks green and mergeable", ...common };
+            }
+            // ---- END inlined merge-decision.js ---------------------------------
+
+            // Either label arms the merge. They are never equivalent in the
+            // record: the merge comment names which one authorized it.
+            //   founder-approved — the Founder only. Agents prohibited.
+            //   review-passed    — the CEO agent, on final review-gate approval,
+            //                      when the Merge Gate Rubric is clear.
+            const APPROVAL_LABELS = ['founder-approved', 'review-passed'];
+            // This repo runs NO checks on pull requests — deploy.yml is push-only. The
+            // `CodeQL` / `Analyze (...)` runs on its PRs come from GitHub's CodeQL default
+            // setup, configured in repo Settings rather than in any checked-in YAML, so
+            // gating on them would depend on a toggle no commit here can see. Until this
+            // repo has its own PR CI (BRO-2024 follow-up), the arming label alone merges,
+            // and the merge comment says so out loud.
+            // This is the repo from BRO-1890 where the Founder was told to apply
+            // `founder-approved` to a workflow that did not exist.
+            const REQUIRED_CHECKS = [];
+            const MERGE_METHOD    = 'squash';
+            const STALL_AFTER_MS  = 6 * 3600_000;
+            const { owner, repo } = context.repo;
+            const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+            const getPr = async (n) =>
+              (await github.rest.pulls.get({ owner, repo, pull_number: n })).data;
+
+            // GitHub computes `mergeable` asynchronously; it is null until ready.
+            async function pollMergeable(n) {
+              let pr = await getPr(n);
+              for (let i = 0; i < 6 && pr.mergeable === null; i++) {
+                await sleep(3000);
+                pr = await getPr(n);
+              }
+              return pr;
+            }
+
+            // Post a comment only if one carrying `marker` does not already exist,
+            // so the 30-min sweep does not re-comment the same state every run.
+            async function postOnce(n, marker, body) {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: n, per_page: 100,
+              });
+              if (comments.some((c) => (c.body || '').includes(marker))) return false;
+              await github.rest.issues.createComment({ owner, repo, issue_number: n, body: `${marker}\n${body}` });
+              return true;
+            }
+
+            // Who applied the arming label + when. The actor is the audit trail
+            // Eric's policy needs; the timestamp drives stall detection.
+            async function labelEvent(n) {
+              try {
+                const events = await github.paginate(github.rest.issues.listEvents, {
+                  owner, repo, issue_number: n, per_page: 100,
+                });
+                const labeled = events.filter(
+                  (e) => e.event === 'labeled' && e.label && APPROVAL_LABELS.includes(e.label.name),
+                );
+                const last = labeled[labeled.length - 1];
+                if (last) {
+                  return {
+                    actor: last.actor && last.actor.login ? last.actor.login : 'unknown',
+                    at: last.created_at,
+                    atMs: Date.parse(last.created_at),
+                  };
+                }
+              } catch (e) {
+                core.warning(`labelEvent lookup failed: ${e.message}`);
+              }
+              return { actor: 'unknown', at: null, atMs: null };
+            }
+
+            async function attemptMerge(n, { verbose }) {
+              const pr = await pollMergeable(n);
+              const sha = pr.head.sha;
+              const { data: checks } = await github.rest.checks.listForRef({
+                owner, repo, ref: sha, per_page: 100,
+              });
+              const who = await labelEvent(n);
+
+              const d = decideMerge({
+                merged: !!pr.merged,
+                state: pr.state,
+                mergeable: pr.mergeable,
+                labels: (pr.labels || []).map((l) => l.name),
+                checkRuns: checks.check_runs,
+                approvalLabels: APPROVAL_LABELS,
+                requiredChecks: REQUIRED_CHECKS,
+                labelAppliedAtMs: who.atMs,
+                nowMs: Date.now(),
+                stallAfterMs: STALL_AFTER_MS,
+              });
+
+              core.info(`#${n}: ${d.action} — ${d.reason}`);
+
+              if (d.action === 'wait-checks') {
+                if (verbose) {
+                  await postOnce(n, `<!-- merge-on-approval:ci:${sha} -->`,
+                    `⏳ \`${d.armedBy}\` is set, but not merging yet — ${d.reason}. ` +
+                    `I'll merge automatically once every required check is green ` +
+                    `(re-checked on the next push and on the scheduled sweep).`);
+                }
+                return { number: n, status: 'wait-checks' };
+              }
+
+              if (d.action === 'blocked-checks') {
+                await postOnce(n, `<!-- merge-on-approval:failed:${sha} -->`,
+                  `❌ \`${d.armedBy}\` is set but CI is red — ${d.reason}. ` +
+                  `Push a fix; the label stays and I'll merge once the checks go green.`);
+                return { number: n, status: 'blocked-checks' };
+              }
+
+              // The BRO-1863 case. Silence looks identical to "still running"
+              // until someone says otherwise — so say it, once, out loud.
+              if (d.action === 'stalled-checks') {
+                await postOnce(n, `<!-- merge-on-approval:stalled:${sha} -->`,
+                  `🚨 **CI never reported.** \`${d.armedBy}\` has been set for over ` +
+                  `${Math.round(STALL_AFTER_MS / 3600_000)}h and these required checks have produced ` +
+                  `no run at all on \`${sha.slice(0, 7)}\`: ${d.missingChecks.map((c) => `\`${c}\``).join(', ')}.\n\n` +
+                  `This is the signature of a workflow-scheduling failure, not a slow build — see BRO-1863, ` +
+                  `where GitHub scheduled zero \`pull_request\` runs on this org and three PRs stalled silently. ` +
+                  `Check whether the workflow is firing at all before assuming the PR is at fault.`);
+                return { number: n, status: 'stalled-checks' };
+              }
+
+              if (d.action === 'blocked-conflict') {
+                await postOnce(n, `<!-- merge-on-approval:conflict:${sha} -->`,
+                  `⚠️ \`${d.armedBy}\` is set and CI is green, but this PR conflicts with \`${pr.base.ref}\` ` +
+                  `and can't be merged automatically. Rebase/resolve — the label will merge it once mergeable.`);
+                return { number: n, status: 'blocked-conflict' };
+              }
+
+              if (d.action === 'wait-mergeability') {
+                if (verbose) {
+                  await postOnce(n, `<!-- merge-on-approval:pending-mergeability:${sha} -->`,
+                    `⏳ Armed and CI green, but GitHub is still computing mergeability. The sweep will retry shortly.`);
+                }
+                return { number: n, status: 'wait-mergeability' };
+              }
+
+              if (d.action !== 'merge') return { number: n, status: d.action };
+
+              await github.rest.pulls.merge({ owner, repo, pull_number: n, merge_method: MERGE_METHOD });
+
+              let branchDeleted = false;
+              if (pr.head.repo && pr.head.repo.full_name === `${owner}/${repo}`) {
+                try {
+                  await github.rest.git.deleteRef({ owner, repo, ref: `heads/${pr.head.ref}` });
+                  branchDeleted = true;
+                } catch (e) {
+                  core.warning(`branch delete failed for ${pr.head.ref}: ${e.message}`);
+                }
+              }
+
+              const authority = d.armedBy === 'founder-approved'
+                ? 'the Founder personally authorized this merge'
+                : 'agent review authority under the Merge Gate Rubric (CONTRIBUTING.md)';
+
+              // A repo with no PR-time CI has an empty REQUIRED_CHECKS. Say so
+              // explicitly rather than rendering an empty "Gates:" line that
+              // reads like the checks passed (BRO-2024).
+              const gates = REQUIRED_CHECKS.length
+                ? `${REQUIRED_CHECKS.map((c) => `\`${c}\``).join(', ')} — all success on \`${sha.slice(0, 7)}\``
+                : `**none configured in this repo** — the label alone authorized this merge`;
+
+              await github.rest.issues.createComment({ owner, repo, issue_number: n, body:
+                `<!-- merge-on-approval:merged:${sha} -->\n` +
+                `✅ Merged by **merge-on-approval** (\`${MERGE_METHOD}\`).\n\n` +
+                `- Authorized by: \`${d.armedBy}\` — ${authority}\n` +
+                `- Applied by: **@${who.actor}**${who.at ? ` at ${who.at}` : ''}\n` +
+                `- Gates: ${gates}\n` +
+                `- Branch \`${pr.head.ref}\`: ${branchDeleted ? 'deleted' : 'left in place'}\n\n` +
+                `_Audit: \`founder-approved\` may only ever be applied by the Founder; agents applying it is an ` +
+                `audit failure. \`review-passed\` is agent-appliable but forbidden on hard-stop rubric categories._`,
+              });
+              return { number: n, status: 'merged', actor: who.actor, armedBy: d.armedBy };
+            }
+
+            const event = context.eventName;
+            const results = [];
+
+            if (event === 'pull_request') {
+              const action = context.payload.action;
+              const pr = context.payload.pull_request;
+              if (action === 'labeled') {
+                if (context.payload.label && APPROVAL_LABELS.includes(context.payload.label.name)) {
+                  results.push(await attemptMerge(pr.number, { verbose: true }));
+                } else {
+                  core.info(`Ignoring 'labeled' for "${context.payload.label && context.payload.label.name}".`);
+                }
+              } else if (action === 'synchronize') {
+                const full = await getPr(pr.number);
+                const present = (full.labels || []).map((l) => l.name).filter((n) => APPROVAL_LABELS.includes(n));
+                if (present.length) {
+                  for (const name of present) {
+                    await github.rest.issues
+                      .removeLabel({ owner, repo, issue_number: pr.number, name })
+                      .catch((e) => core.warning(`removeLabel(${name}) failed: ${e.message}`));
+                  }
+                  await github.rest.issues.createComment({ owner, repo, issue_number: pr.number, body:
+                    `<!-- merge-on-approval:label-stripped:${full.head.sha} -->\n` +
+                    `🔄 New commits pushed after approval — removed ${present.map((n) => `\`${n}\``).join(', ')}. ` +
+                    `Re-apply once CI is green on the new commit to merge the updated PR.` });
+                  results.push({ number: pr.number, status: 'label-stripped' });
+                }
+              }
+            } else if (event === 'schedule' || event === 'workflow_dispatch') {
+              const prs = await github.paginate(github.rest.pulls.list, {
+                owner, repo, state: 'open', per_page: 100,
+              });
+              const labeled = prs.filter((p) => (p.labels || []).some((l) => APPROVAL_LABELS.includes(l.name)));
+              core.info(`Sweep: ${labeled.length} open PR(s) carrying ${APPROVAL_LABELS.join(' or ')}.`);
+              for (const p of labeled) {
+                results.push(await attemptMerge(p.number, { verbose: event === 'workflow_dispatch' }));
+              }
+            }
+
+            // Digest → run summary (audit surface; no comment spam).
+            const merged   = results.filter((r) => r.status === 'merged');
+            const awaiting = results.filter((r) => ['wait-checks', 'wait-mergeability'].includes(r.status));
+            const redCI    = results.filter((r) => r.status === 'blocked-checks');
+            const stalled  = results.filter((r) => r.status === 'stalled-checks');
+            const blocked  = results.filter((r) => r.status === 'blocked-conflict');
+            const stripped = results.filter((r) => r.status === 'label-stripped');
+            const fmt = (arr) => (arr.length ? arr.map((r) => `#${r.number}`).join(', ') : '—');
+            await core.summary
+              .addHeading(`merge-on-approval · ${event}`)
+              .addTable([
+                [{ data: 'Outcome', header: true }, { data: 'PRs', header: true }],
+                ['✅ Merged', fmt(merged)],
+                ['⏳ Awaiting CI / mergeability', fmt(awaiting)],
+                ['❌ CI red', fmt(redCI)],
+                ['🚨 CI never reported', fmt(stalled)],
+                ['⚠️ Blocked (conflict)', fmt(blocked)],
+                ['🔄 Label stripped (new push)', fmt(stripped)],
+              ])
+              .write();
+
+            if (merged.length) core.notice(`Merged: ${merged.map((r) => `#${r.number}`).join(', ')}`);
