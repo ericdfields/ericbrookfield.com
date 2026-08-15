@@ -57,13 +57,29 @@
 # every labeled-but-not-yet-merged PR (e.g. one labeled while CI was still
 # running) and emits a digest to the run summary.
 #
+# POST-MERGE DISPATCH (BRO-2059): GitHub deliberately refuses to let a push made
+# with the default `GITHUB_TOKEN` trigger further `push` / `pull_request`
+# workflows — an anti-recursion guard. So this workflow merging a PR is NOT the
+# same event as a human merging it: the commit lands on the base branch and any
+# `on: push` Deploy workflow never runs. Production keeps serving the pre-merge
+# build, and nothing anywhere reports a failure, because nothing failed. On
+# `argus` that hid two shipped PRs for ~35h; the same silent gap existed in every
+# repo that pairs this gate with a push-triggered deploy.
+#
+# An EXPLICIT API dispatch is exempt from the guard, so the fix is to ask for the
+# run by name instead of hoping for a cascade. POST_MERGE_DISPATCH maps each base
+# branch to the workflow files to re-dispatch on it after a successful merge.
+# Every listed workflow must declare `workflow_dispatch:` on that branch or the
+# dispatch 422s — `scripts/merge-gate/audit.mjs` checks that pairing against the
+# real repos, so the mistake fails in CI rather than in production.
+#
 # SECURITY / AUDIT: because agents and Eric share the `ericdfields` account, an
 # agent is technically capable of applying this label. That is PROHIBITED
 # (see CONTRIBUTING.md, The Two Merge Labels). Every merge is commented with the labeling actor + timestamp
 # so misuse is auditable after the fact.
 #
 # merge-gate-repo: ericdfields/ericbrookfield.com
-# merge-gate-version: be4b8f0b3b17
+# merge-gate-version: a216b7b850cd
 
 name: merge-on-approval
 
@@ -79,6 +95,7 @@ permissions:
   pull-requests: write # merge, comment, manage labels
   issues: write # label management goes through the issues API
   checks: read # read the required-check conclusions
+  actions: write # re-dispatch the post-merge workflows a bot merge can't cascade to
 
 concurrency:
   # One in-flight run per PR (event path) or per sweep (schedule path). Never
@@ -198,6 +215,12 @@ jobs:
             // This is the repo from BRO-1890 where the Founder was told to apply
             // `founder-approved` to a workflow that did not exist.
             const REQUIRED_CHECKS = [];
+            // deploy.yml builds with withastro/action and publishes to GitHub Pages on
+            // `push: [main]`. It already carries `workflow_dispatch:`, so the dispatch
+            // works the moment this generation of the gate is installed.
+            const POST_MERGE_DISPATCH = {
+              'main': ['deploy.yml'],
+            };
             const MERGE_METHOD    = 'squash';
             const STALL_AFTER_MS  = 6 * 3600_000;
             const { owner, repo } = context.repo;
@@ -249,6 +272,42 @@ jobs:
                 core.warning(`labelEvent lookup failed: ${e.message}`);
               }
               return { actor: 'unknown', at: null, atMs: null };
+            }
+
+            // BRO-2059. A merge performed here does not cascade into `on: push`
+            // workflows, so anything that used to ride the push — a deploy, a
+            // release, a cache warm — has to be asked for by name. Dispatch is
+            // per BASE branch: a workflow listed under `staging` must never be
+            // fired at `main`, because `createWorkflowDispatch` runs the file as
+            // it exists on the ref it is given.
+            //
+            // A dispatch failure NEVER fails this run. The merge already
+            // happened and cannot be undone; the useful thing left is to say so
+            // loudly — in the PR comment and the run summary — rather than throw
+            // and leave the merge looking unfinished.
+            async function dispatchPostMerge(baseRef) {
+              const workflows = POST_MERGE_DISPATCH[baseRef] || [];
+              const outcomes = [];
+              for (const workflow of workflows) {
+                try {
+                  await github.rest.actions.createWorkflowDispatch({
+                    owner, repo, workflow_id: workflow, ref: baseRef,
+                  });
+                  core.info(`post-merge: dispatched ${workflow} on ${baseRef}`);
+                  outcomes.push({ workflow, ok: true, detail: `dispatched on \`${baseRef}\`` });
+                } catch (e) {
+                  // The two failures worth naming precisely, because both look
+                  // identical from the PR ("no deploy ran") but need different fixes.
+                  const detail = /workflow_dispatch/i.test(e.message)
+                    ? `has no \`workflow_dispatch:\` trigger on \`${baseRef}\` — add one, or this can never be dispatched`
+                    : e.status === 404
+                      ? `does not exist on \`${baseRef}\` — fix the entry in repos.json`
+                      : `dispatch failed: ${e.message}`;
+                  core.warning(`post-merge: ${workflow} ${detail}`);
+                  outcomes.push({ workflow, ok: false, detail });
+                }
+              }
+              return outcomes;
             }
 
             async function attemptMerge(n, { verbose }) {
@@ -333,6 +392,8 @@ jobs:
                 }
               }
 
+              const dispatched = await dispatchPostMerge(pr.base.ref);
+
               const authority = d.armedBy === 'founder-approved'
                 ? 'the Founder personally authorized this merge'
                 : 'agent review authority under the Merge Gate Rubric (CONTRIBUTING.md)';
@@ -344,17 +405,26 @@ jobs:
                 ? `${REQUIRED_CHECKS.map((c) => `\`${c}\``).join(', ')} — all success on \`${sha.slice(0, 7)}\``
                 : `**none configured in this repo** — the label alone authorized this merge`;
 
+              // Say what did or did not get kicked off. A bot merge cannot
+              // cascade into `on: push`, so "nothing configured" is a real and
+              // reportable state, not an empty line (BRO-2059).
+              const postMerge = dispatched.length
+                ? dispatched.map((r) => `${r.ok ? '✅' : '⚠️'} \`${r.workflow}\` ${r.detail}`).join('; ')
+                : `**nothing configured for \`${pr.base.ref}\`** — a bot merge does not trigger ` +
+                  `\`on: push\` workflows, so no deploy ran as a result of this merge`;
+
               await github.rest.issues.createComment({ owner, repo, issue_number: n, body:
                 `<!-- merge-on-approval:merged:${sha} -->\n` +
                 `✅ Merged by **merge-on-approval** (\`${MERGE_METHOD}\`).\n\n` +
                 `- Authorized by: \`${d.armedBy}\` — ${authority}\n` +
                 `- Applied by: **@${who.actor}**${who.at ? ` at ${who.at}` : ''}\n` +
                 `- Gates: ${gates}\n` +
-                `- Branch \`${pr.head.ref}\`: ${branchDeleted ? 'deleted' : 'left in place'}\n\n` +
+                `- Branch \`${pr.head.ref}\`: ${branchDeleted ? 'deleted' : 'left in place'}\n` +
+                `- Post-merge: ${postMerge}\n\n` +
                 `_Audit: \`founder-approved\` may only ever be applied by the Founder; agents applying it is an ` +
                 `audit failure. \`review-passed\` is agent-appliable but forbidden on hard-stop rubric categories._`,
               });
-              return { number: n, status: 'merged', actor: who.actor, armedBy: d.armedBy };
+              return { number: n, status: 'merged', actor: who.actor, armedBy: d.armedBy, dispatched };
             }
 
             const event = context.eventName;
@@ -403,6 +473,9 @@ jobs:
             const stalled  = results.filter((r) => r.status === 'stalled-checks');
             const blocked  = results.filter((r) => r.status === 'blocked-conflict');
             const stripped = results.filter((r) => r.status === 'label-stripped');
+            // A merge that shipped nothing is the BRO-2059 failure. It is not an
+            // error in this run, so it gets its own row rather than a red X.
+            const noDeploy = merged.filter((r) => (r.dispatched || []).some((x) => !x.ok));
             const fmt = (arr) => (arr.length ? arr.map((r) => `#${r.number}`).join(', ') : '—');
             await core.summary
               .addHeading(`merge-on-approval · ${event}`)
@@ -414,7 +487,15 @@ jobs:
                 ['🚨 CI never reported', fmt(stalled)],
                 ['⚠️ Blocked (conflict)', fmt(blocked)],
                 ['🔄 Label stripped (new push)', fmt(stripped)],
+                ['🚀 Post-merge dispatch failed', fmt(noDeploy)],
               ])
               .write();
 
             if (merged.length) core.notice(`Merged: ${merged.map((r) => `#${r.number}`).join(', ')}`);
+            if (noDeploy.length) {
+              core.warning(
+                `Merged but nothing was deployed for: ${noDeploy.map((r) => `#${r.number}`).join(', ')}. ` +
+                `A bot merge cannot trigger \`on: push\` workflows (BRO-2059) — see the PR comment for which ` +
+                `dispatch failed and why.`,
+              );
+            }
