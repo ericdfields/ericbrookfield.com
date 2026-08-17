@@ -108,7 +108,7 @@
 # so misuse is auditable after the fact.
 #
 # merge-gate-repo: ericdfields/ericbrookfield.com
-# merge-gate-version: de91e44c0884
+# merge-gate-version: 3f71722f3dcf
 
 name: merge-on-approval
 
@@ -136,6 +136,20 @@ concurrency:
 
 jobs:
   merge:
+    # `pull_request_target` runs privileged, in the base repo's context, even for
+    # PRs opened from forks — and two of the repos this template installs into
+    # are PUBLIC, so an outside contributor can trigger it. This workflow runs
+    # nothing from the PR, so that is not a code-execution path, but there is no
+    # reason to hand a write token to a run a stranger can start. Fork PRs
+    # therefore skip the event path entirely.
+    #
+    # Nothing is lost by it: the scheduled sweep runs on the default branch with
+    # the same permissions and picks up ANY labeled PR, fork included. A fork PR
+    # is merged by the sweep instead of on the label, which is exactly what
+    # happened before this trigger existed.
+    if: >-
+      github.event_name != 'pull_request_target' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       # No checkout: the decision core is inlined below so this workflow is a
