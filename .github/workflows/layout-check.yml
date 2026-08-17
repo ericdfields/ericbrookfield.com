@@ -18,7 +18,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # astro 6 requires Node >=22.12.0 — matches deploy.yml (BRO-910/BRO-854)
+          # astro 7 requires Node >=22.12.0 — matches deploy.yml (BRO-910/BRO-854)
           node-version: 22
           cache: npm
 
@@ -35,4 +35,15 @@ jobs:
             curl -sf http://localhost:4321/ > /dev/null && break
             sleep 1
           done
+          # `astro preview --port` falls back to the next free port instead of
+          # failing when 4321 is taken, so a stray listener makes the check run
+          # against someone else's server — which reports every route as a 404
+          # and reads like a real layout regression (BRO-1657 category
+          # safeguard). Confirm the server on 4321 is actually this build
+          # before trusting anything it says.
+          if ! curl -sf http://localhost:4321/archive/ | grep -q 'Eric Brookfield'; then
+            echo "::error::Nothing recognisable as this site is serving on :4321 —"
+            echo "::error::the preview server failed to start or fell back to another port."
+            exit 1
+          fi
           npm run check:layout -- http://localhost:4321

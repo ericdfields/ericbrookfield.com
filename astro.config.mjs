@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from "astro/config";
+import { unified } from "@astrojs/markdown-remark";
 import sitemap from "@astrojs/sitemap";
 import { remarkFixImagePaths } from "./src/utils/remark-fix-image-paths.mjs";
 import { legacyHtmlRedirects } from "./src/redirects.mjs";
@@ -17,7 +18,13 @@ export default defineConfig({
   // config, which emits `foo.html/index.html` directories) so the exact
   // no-trailing-slash `.html` URL resolves directly on GitHub Pages.
   integrations: [sitemap(), legacyHtmlRedirects()],
+  // Astro 7 made Sätteri the default Markdown processor. We stay on the
+  // `unified`/remark processor from `@astrojs/markdown-remark` so the 60+
+  // archived posts render byte-identically to Astro 6 — switching engines is
+  // a content-rendering change, not a security fix (BRO-1657).
   markdown: {
-    remarkPlugins: [remarkFixImagePaths],
+    processor: unified({
+      remarkPlugins: [remarkFixImagePaths],
+    }),
   },
 });
