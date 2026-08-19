@@ -73,18 +73,49 @@
 # dispatch 422s — `scripts/merge-gate/audit.mjs` checks that pairing against the
 # real repos, so the mistake fails in CI rather than in production.
 #
+# WHY `pull_request_target` AND NOT `pull_request` (BRO-2244): for `pull_request`,
+# GitHub resolves the workflow file to run from the PR's HEAD branch. A gate
+# installed on `main` today therefore does not exist on any PR branch cut before
+# today, and on those PRs `labeled` fires NOTHING — the Founder applies the label
+# and the only thing that ever notices is the 30-minute sweep. Worse, the
+# `synchronize` half is inert too, so a push after approval never strips the
+# label and the sweep can merge code that was approved in an earlier state. That
+# was 37 of 62 open PRs across the fleet when it was found (leadrrr#28: label at
+# 18:56:11Z, zero runs, merged only via a manual dispatch 8 minutes later).
+#
+# `pull_request_target` instead "runs in the context of the default branch of the
+# base repository" (GitHub's words). Note DEFAULT branch, not the PR's base
+# branch — verified the hard way: a proof PR based on a scratch branch carrying
+# this file fired nothing, because GitHub had only ever read `main`. That is the
+# semantics this gate actually wants, and slightly stronger than base-resolution
+# would be: whether a repo merges on a label is repo policy, and no PR opts out
+# of it by being old. It also means one merge to `main` arms every open PR at
+# once, including PRs based on `staging` — those now run `main`'s copy of the
+# gate, so POST_MERGE_DISPATCH must keep an entry for every base branch in use
+# (it is keyed by base ref, and audit.mjs checks the pairing).
+#
+# The standard objection to `pull_request_target` is that it runs with a
+# read/write token against untrusted PR code. That cannot happen here: this
+# workflow has NO `actions/checkout` step and never executes anything from the
+# PR. The decision core is inlined into this file (i.e. read from the base
+# branch) and reaches the PR only through `github-script` API reads, where PR
+# text is JS data and never shell/`${{ }}` interpolation. Do not "fix" this back
+# to `pull_request` — `audit.mjs` fails the fleet if you do.
+#
 # SECURITY / AUDIT: because agents and Eric share the `ericdfields` account, an
 # agent is technically capable of applying this label. That is PROHIBITED
 # (see CONTRIBUTING.md, The Two Merge Labels). Every merge is commented with the labeling actor + timestamp
 # so misuse is auditable after the fact.
 #
 # merge-gate-repo: ericdfields/ericbrookfield.com
-# merge-gate-version: a216b7b850cd
+# merge-gate-version: 3f71722f3dcf
 
 name: merge-on-approval
 
 on:
-  pull_request:
+  # `_target`, not `pull_request` — resolves this file from the repo's DEFAULT
+  # branch, so the gate applies to PRs older than its own install (BRO-2244).
+  pull_request_target:
     types: [labeled, synchronize]
   schedule:
     - cron: "*/30 * * * *" # backstop sweep for PRs labeled while CI was still running
@@ -105,6 +136,20 @@ concurrency:
 
 jobs:
   merge:
+    # `pull_request_target` runs privileged, in the base repo's context, even for
+    # PRs opened from forks — and two of the repos this template installs into
+    # are PUBLIC, so an outside contributor can trigger it. This workflow runs
+    # nothing from the PR, so that is not a code-execution path, but there is no
+    # reason to hand a write token to a run a stranger can start. Fork PRs
+    # therefore skip the event path entirely.
+    #
+    # Nothing is lost by it: the scheduled sweep runs on the default branch with
+    # the same permissions and picks up ANY labeled PR, fork included. A fork PR
+    # is merged by the sweep instead of on the label, which is exactly what
+    # happened before this trigger existed.
+    if: >-
+      github.event_name != 'pull_request_target' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       # No checkout: the decision core is inlined below so this workflow is a
@@ -439,7 +484,7 @@ jobs:
             const event = context.eventName;
             const results = [];
 
-            if (event === 'pull_request') {
+            if (event === 'pull_request_target') {
               const action = context.payload.action;
               const pr = context.payload.pull_request;
               if (action === 'labeled') {
