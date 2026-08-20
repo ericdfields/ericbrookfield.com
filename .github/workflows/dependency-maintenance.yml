@@ -1,0 +1,76 @@
+name: Dependency maintenance
+
+# Fully autonomous package maintenance. No human, no LLM, no tokens.
+#
+#   patch/minor  -> approved and merged automatically once CI is green
+#   major        -> labeled `major-bump` + `needs-human`, never auto-merged
+#   abandoned    -> closed after 45 days, branch deleted, Dependabot re-raises
+#
+# Security PRs are exempt from the stale sweep so they never get closed out
+# from under you.
+
+on:
+  pull_request_target:
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  automerge:
+    if: github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # --auto queues the merge behind required status checks. If the build
+      # is red the PR simply sits there; nothing unsafe lands.
+      - name: Approve and auto-merge patch/minor
+        if: |
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          steps.meta.outputs.update-type == 'version-update:semver-minor'
+        run: |
+          gh pr review --approve "$PR_URL"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Quarantine major bumps for human review
+        if: steps.meta.outputs.update-type == 'version-update:semver-major'
+        run: |
+          gh pr edit "$PR_URL" --add-label "major-bump" --add-label "needs-human"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  stale:
+    if: github.event_name != 'pull_request_target'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          only-pr-labels: "dependencies"
+          exempt-pr-labels: "security,pinned,major-bump"
+          days-before-pr-stale: 30
+          days-before-pr-close: 15
+          days-before-issue-stale: -1
+          days-before-issue-close: -1
+          stale-pr-label: "stale"
+          stale-pr-message: >
+            Open 30 days without merging. Closing in 15 unless labeled
+            `pinned` — Dependabot will raise a current version if the
+            update still applies.
+          close-pr-message: >
+            Closed automatically after 45 days of inactivity. Dependabot
+            will re-raise this at the then-current version.
+          delete-branch: true
+          operations-per-run: 100
