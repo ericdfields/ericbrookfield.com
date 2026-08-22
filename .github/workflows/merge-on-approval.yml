@@ -296,6 +296,15 @@ jobs:
             // job has no `name:`, so the check-RUN name is the job id `layout`, NOT the
             // workflow name `Layout check`; verified against the check runs on PR #43
             // (88767ed), #42, and #41 rather than transcribed by eye.
+            // `audit` is the single job of audit.yml (BRO-2205), which fails on a HIGH or
+            // CRITICAL advisory against package-lock.json. Same shape as `layout`: bare
+            // `pull_request`, no branch filter, no `paths:`, no matrix, no job-level `if:`,
+            // not continue-on-error, and no `name:` — so the check-RUN name is the job id
+            // `audit`. Verified against the check runs on PR #50, not transcribed by eye.
+            // It was missing from this list from the day audit.yml landed (2026-08-19),
+            // which is the BRO-2259 failure repeated: a workflow written to be a gate, real
+            // in CI and decorative at the merge gate, so an armed PR merged on `layout`
+            // alone while the advisory check was still running or already red.
             // The `CodeQL` / `Analyze (...)` runs on the same PRs stay excluded: they come
             // from GitHub's CodeQL default setup, configured in repo Settings rather than
             // in any checked-in YAML, so gating on them would depend on a toggle no commit
@@ -306,12 +315,18 @@ jobs:
             // That gap is why an empty `checks` array now demands a `noPrCiReason`.
             // This is also the repo from BRO-1890 where the Founder was told to apply
             // `founder-approved` to a workflow that did not exist.
-            const REQUIRED_CHECKS = ['layout'];
+            const REQUIRED_CHECKS = ['layout', 'audit'];
             // deploy.yml builds with withastro/action and publishes to GitHub Pages on
             // `push: [main]`. It already carries `workflow_dispatch:`, so the dispatch
             // works the moment this generation of the gate is installed.
+            // audit.yml is `push: [main]` too and also already carries `workflow_dispatch:`.
+            // It landed with BRO-2205 on 2026-08-19, after this entry was written, and was
+            // never registered — audit.mjs has been reporting it as an unregistered dispatch
+            // target since. Registered rather than exempted because its push-to-main run is
+            // what establishes main's own advisory state; skipping it on every bot merge
+            // leaves that state frozen at whatever the last human merge saw.
             const POST_MERGE_DISPATCH = {
-              'main': ['deploy.yml'],
+              'main': ['deploy.yml', 'audit.yml'],
             };
             const MERGE_METHOD    = 'squash';
             const STALL_AFTER_MS  = 6 * 3600_000;
