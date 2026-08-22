@@ -1,0 +1,71 @@
+# Dependency audit gate (BRO-2205, deferred out of BRO-2203).
+#
+# The class of bug this exists for: a transitive dependency gets a security
+# patch, then silently regresses on the next lockfile regeneration because
+# nothing pins it and nothing in CI would notice. BRO-2203 fixed the instance
+# (js-yaml, nanoid) and pinned both in `overrides` — that covers the regression
+# half. This is the detection half: CI goes red the moment a new HIGH or
+# CRITICAL advisory applies to this lockfile, instead of waiting for the weekly
+# human-triggered sweep (BRO-2201) to notice.
+#
+# Why a separate workflow instead of a step in layout-check.yml: layout-check
+# installs Playwright, builds the site and boots a preview server — minutes. The
+# audit needs neither `npm ci` nor a build (npm resolves advisories straight
+# from package-lock.json), so it reports in seconds. Keeping it separate also
+# means "the audit is red" and "the layout is broken" are two distinct check
+# names on the PR rather than one ambiguous failure.
+#
+# Why this could not ship with BRO-2203: the repo had open HIGH advisories that
+# only cleared via the breaking astro 7 migration (BRO-1657). A gate that is red
+# on arrival trains everyone to ignore it — strictly worse than no gate. It
+# lands now because `npm audit` reports 0 vulnerabilities at every severity on
+# `main` at 31e52d8.
+#
+# When this goes red: fix it, don't route around it.
+#   1. `npm audit fix` if a non-breaking version exists.
+#   2. Otherwise pin the patched transitive version in `overrides` in
+#      package.json, then `npm update <pkg>` — plain `npm install` after editing
+#      `overrides` can silently no-op — and assert the resolved version in
+#      package-lock.json before pushing.
+#   3. If neither is possible (the fix needs a breaking major), open an issue for
+#      the migration and say so on the PR. npm audit has no per-advisory
+#      suppression, so the honest options are "fix it" or "record why not".
+name: Audit
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, so a newly published advisory against unchanged code is caught
+    # without anyone opening a PR. GitHub emails the last committer to this file
+    # when a scheduled run fails. Note GitHub disables scheduled workflows after
+    # 60 days of repo inactivity — the sweep in BRO-2201 remains the backstop.
+    - cron: "17 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # astro 7 requires Node >=22.12.0 — matches deploy.yml and
+          # layout-check.yml (BRO-910/BRO-854).
+          node-version: 22
+
+      # No `npm ci`: `npm audit` resolves advisories from package-lock.json
+      # alone, so this stays a seconds-long check rather than a full install.
+      - name: npm audit (fails on high or critical)
+        run: |
+          if ! npm audit --audit-level=high; then
+            echo "::error::npm audit found a HIGH or CRITICAL advisory affecting package-lock.json."
+            echo "::error::Fix with 'npm audit fix', or pin the patched version in package.json 'overrides' + 'npm update <pkg>'."
+            echo "::error::See the header of .github/workflows/audit.yml (BRO-2205) before considering a workaround."
+            exit 1
+          fi
