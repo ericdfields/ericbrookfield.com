@@ -108,7 +108,7 @@
 # so misuse is auditable after the fact.
 #
 # merge-gate-repo: ericdfields/ericbrookfield.com
-# merge-gate-version: 3f71722f3dcf
+# merge-gate-version: 480261e4b749
 
 name: merge-on-approval
 
@@ -185,14 +185,25 @@ jobs:
               );
             }
 
+            /**
+             * Conclusions that mean "this check produced no verdict", as distinct from
+             * "this check said no" (BRO-2370). A run killed mid-flight — the machine went
+             * away, the queue was drained, a newer push superseded it — reports as a red X
+             * in the GitHub UI and in the checks API alike, but nothing was actually
+             * evaluated. Treating it as a failure told the Founder a docs-only PR had
+             * failed `mcp-build`, which is not a thing that can happen. These need a
+             * re-run, not a fix.
+             */
+            const NO_VERDICT = new Set(["cancelled", "stale"]);
+
             function decideMerge(input) {
               const {
-                merged, state, mergeable, labels, checkRuns,
+                merged, state, draft, mergeable, labels, checkRuns,
                 approvalLabels, requiredChecks,
                 labelAppliedAtMs, nowMs, stallAfterMs,
               } = input;
 
-              const nothing = { armedBy: null, missingChecks: [], failedChecks: [] };
+              const nothing = { armedBy: null, missingChecks: [], failedChecks: [], cancelledChecks: [] };
 
               if (merged) return { action: "already-merged", reason: "already merged", ...nothing };
               if (state !== "open") return { action: "closed", reason: `PR is ${state}`, ...nothing };
@@ -200,41 +211,68 @@ jobs:
               const armedBy = approvalLabels.find((l) => labels.includes(l)) || null;
               if (!armedBy) return { action: "no-label", reason: "no arming label", ...nothing };
 
+              /**
+               * A draft is the author saying "not ready", and GitHub enforces it: the merge
+               * API rejects a draft with 405 "Pull Request is still a draft". Nothing
+               * screened for it, so an armed draft threw straight out of `attemptMerge` —
+               * the same poison-pill shape as the workflow-scope 403, and the live cause of
+               * argus's dead sweep on 2026-08-22 (BRO-2200). The per-PR try/catch from
+               * BRO-2370 keeps the sweep alive through it, but the run still goes red every
+               * 30 minutes over a PR whose author has done nothing wrong.
+               *
+               * Arming a draft is legitimate — "merge this once I mark it ready" — so this
+               * waits rather than complaining, and deliberately does NOT feed stall
+               * detection: a draft may sit as long as its author likes without that being
+               * an infrastructure fault.
+               */
+              if (draft) return { action: "wait-draft", reason: "PR is a draft", ...nothing, armedBy };
+
               const missingChecks = [];
               const failedChecks = [];
+              const cancelledChecks = [];
               let pending = 0;
 
               for (const name of requiredChecks) {
                 const run = latestRun(checkRuns, name);
                 if (!run) missingChecks.push(name);
                 else if (run.status !== "completed") pending++;
+                else if (NO_VERDICT.has(run.conclusion)) cancelledChecks.push(name);
                 else if (run.conclusion !== "success") failedChecks.push(name);
               }
 
-              const common = { armedBy, missingChecks, failedChecks };
+              const common = { armedBy, missingChecks, failedChecks, cancelledChecks };
 
               // A red check is a normal outcome the author owns — report it and stop.
               if (failedChecks.length) {
                 return { action: "blocked-checks", reason: `failing: ${failedChecks.join(", ")}`, ...common };
               }
 
-              if (missingChecks.length || pending) {
+              if (missingChecks.length || cancelledChecks.length || pending) {
                 // Absent is not the same as failing. A check that never appears is an
                 // infrastructure fault (BRO-1863), and its signature is silence — so once
-                // the window closes, say so out loud instead of waiting forever.
+                // the window closes, say so out loud instead of waiting forever. A
+                // CANCELLED run is the same class of non-answer (BRO-2370): it is silence
+                // that happens to occupy a slot, so it waits and stalls like an absent one
+                // rather than being reported as the author's red check.
+                const noVerdict = [...missingChecks, ...cancelledChecks];
                 const stalled =
-                  missingChecks.length > 0 &&
+                  noVerdict.length > 0 &&
                   labelAppliedAtMs !== null &&
                   nowMs - labelAppliedAtMs >= stallAfterMs;
 
                 if (stalled) {
-                  return {
-                    action: "stalled-checks",
-                    reason: `no run reported for ${missingChecks.join(", ")} in ${Math.round(stallAfterMs / 3600_000)}h`,
-                    ...common,
-                  };
+                  const hours = Math.round(stallAfterMs / 3600_000);
+                  const parts = [
+                    ...(missingChecks.length ? [`no run reported for ${missingChecks.join(", ")}`] : []),
+                    ...(cancelledChecks.length ? [`${cancelledChecks.join(", ")} cancelled without a verdict (re-run required)`] : []),
+                  ];
+                  return { action: "stalled-checks", reason: `${parts.join("; ")} in ${hours}h`, ...common };
                 }
-                const waiting = [...missingChecks.map((c) => `${c} (no run yet)`), ...(pending ? [`${pending} still running`] : [])];
+                const waiting = [
+                  ...missingChecks.map((c) => `${c} (no run yet)`),
+                  ...cancelledChecks.map((c) => `${c} (cancelled — needs a re-run)`),
+                  ...(pending ? [`${pending} still running`] : []),
+                ];
                 return { action: "wait-checks", reason: `waiting on ${waiting.join(", ")}`, ...common };
               }
 
@@ -375,6 +413,7 @@ jobs:
               const d = decideMerge({
                 merged: !!pr.merged,
                 state: pr.state,
+                draft: !!pr.draft,
                 mergeable: pr.mergeable,
                 labels: (pr.labels || []).map((l) => l.name),
                 checkRuns: checks.check_runs,
@@ -386,6 +425,18 @@ jobs:
               });
 
               core.info(`#${n}: ${d.action} — ${d.reason}`);
+
+              // Never reaches pulls.merge: GitHub 405s a draft, and that throw is
+              // what killed argus's sweep every 30 min (BRO-2200).
+              if (d.action === 'wait-draft') {
+                if (verbose) {
+                  await postOnce(n, `<!-- merge-on-approval:draft:${n} -->`,
+                    `⏳ \`${d.armedBy}\` is set, but this PR is still a **draft** — GitHub refuses to merge ` +
+                    `a draft no matter who approved it. Click "Ready for review"; the label stays put and ` +
+                    `the next sweep (within 30m) merges it once the required checks are green.`);
+                }
+                return { number: n, status: 'wait-draft' };
+              }
 
               if (d.action === 'wait-checks') {
                 if (verbose) {
@@ -407,10 +458,18 @@ jobs:
               // The BRO-1863 case. Silence looks identical to "still running"
               // until someone says otherwise — so say it, once, out loud.
               if (d.action === 'stalled-checks') {
+                const tick = (c) => `\`${c}\``;
+                const lines = [
+                  ...(d.missingChecks.length
+                    ? [`produced no run at all on \`${sha.slice(0, 7)}\`: ${d.missingChecks.map(tick).join(', ')}`]
+                    : []),
+                  ...(d.cancelledChecks.length
+                    ? [`were **cancelled** without ever reporting a verdict: ${d.cancelledChecks.map(tick).join(', ')} — these need a re-run, not a fix`]
+                    : []),
+                ];
                 await postOnce(n, `<!-- merge-on-approval:stalled:${sha} -->`,
                   `🚨 **CI never reported.** \`${d.armedBy}\` has been set for over ` +
-                  `${Math.round(STALL_AFTER_MS / 3600_000)}h and these required checks have produced ` +
-                  `no run at all on \`${sha.slice(0, 7)}\`: ${d.missingChecks.map((c) => `\`${c}\``).join(', ')}.\n\n` +
+                  `${Math.round(STALL_AFTER_MS / 3600_000)}h and these required checks ${lines.join('; and ')}.\n\n` +
                   `This is the signature of a workflow-scheduling failure, not a slow build — see BRO-1863, ` +
                   `where GitHub scheduled zero \`pull_request\` runs on this org and three PRs stalled silently. ` +
                   `Check whether the workflow is firing at all before assuming the PR is at fault.`);
@@ -516,7 +575,36 @@ jobs:
               const labeled = prs.filter((p) => (p.labels || []).some((l) => APPROVAL_LABELS.includes(l.name)));
               core.info(`Sweep: ${labeled.length} open PR(s) carrying ${APPROVAL_LABELS.join(' or ')}.`);
               for (const p of labeled) {
-                results.push(await attemptMerge(p.number, { verbose: event === 'workflow_dispatch' }));
+                // The sweep is the BACKSTOP — it is the only thing that retries a
+                // PR labeled while CI was still running, and it must therefore
+                // survive any single PR (BRO-2370). It did not: argus #264 edits
+                // `.github/workflows/`, which GITHUB_TOKEN is categorically
+                // forbidden to merge ("refusing to allow a GitHub App to create or
+                // update workflow ... without `workflows` permission"). That 403
+                // threw out of the loop and killed the whole step, so every PR
+                // after it was never evaluated and #168 sat labeled-and-green for
+                // 5 weeks. One un-mergeable PR silently disarmed the gate for the
+                // entire repo — the exact inertness this workflow exists to fix.
+                try {
+                  results.push(await attemptMerge(p.number, { verbose: event === 'workflow_dispatch' }));
+                } catch (e) {
+                  core.warning(`#${p.number}: ${e.message}`);
+                  // The Founder does not read Action logs, so the explanation goes
+                  // where the decision is made. The workflow-file case is called out
+                  // by name because it is permanent: no token this workflow can hold
+                  // will ever merge that PR, so "wait for the sweep" is wrong advice.
+                  const isWorkflowPerm = /without `?workflows`? permission/.test(e.message || '');
+                  await postOnce(p.number, `<!-- merge-on-approval:errored:${p.head.sha} -->`,
+                    isWorkflowPerm
+                      ? `🔒 **This PR has to be merged by a human.** It edits files under ` +
+                        `\`.github/workflows/\`, and GitHub categorically refuses to let a ` +
+                        `GitHub App token merge those — the arming label cannot override it. ` +
+                        `Merge it from the GitHub UI; the gate will not retry.`
+                      : `💥 **The merge gate errored on this PR** and swept past it: \`${e.message}\`. ` +
+                        `The label stays; the sweep retries in 30m. If this repeats, it needs a human.`,
+                  ).catch((err) => core.warning(`comment on #${p.number} failed: ${err.message}`));
+                  results.push({ number: p.number, status: 'errored', error: e.message });
+                }
               }
             }
 
@@ -527,6 +615,8 @@ jobs:
             const stalled  = results.filter((r) => r.status === 'stalled-checks');
             const blocked  = results.filter((r) => r.status === 'blocked-conflict');
             const stripped = results.filter((r) => r.status === 'label-stripped');
+            const drafts   = results.filter((r) => r.status === 'wait-draft');
+            const errored  = results.filter((r) => r.status === 'errored');
             // A merge that shipped nothing is the BRO-2059 failure. It is not an
             // error in this run, so it gets its own row rather than a red X.
             const noDeploy = merged.filter((r) => (r.dispatched || []).some((x) => !x.ok));
@@ -540,10 +630,22 @@ jobs:
                 ['❌ CI red', fmt(redCI)],
                 ['🚨 CI never reported', fmt(stalled)],
                 ['⚠️ Blocked (conflict)', fmt(blocked)],
+                ['📝 Armed but still a draft', fmt(drafts)],
                 ['🔄 Label stripped (new push)', fmt(stripped)],
                 ['🚀 Post-merge dispatch failed', fmt(noDeploy)],
+                ['💥 Errored (swept past)', fmt(errored)],
               ])
               .write();
+
+            // Surface errors AFTER every PR has had its turn. Failing the step is
+            // right — an errored PR needs a human — but it must not be what stops
+            // the other PRs from being swept (BRO-2370).
+            if (errored.length) {
+              core.setFailed(
+                `Sweep completed, but these PRs errored and were skipped: ` +
+                errored.map((r) => `#${r.number} (${r.error})`).join('; '),
+              );
+            }
 
             if (merged.length) core.notice(`Merged: ${merged.map((r) => `#${r.number}`).join(', ')}`);
             if (noDeploy.length) {
