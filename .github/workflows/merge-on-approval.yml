@@ -154,7 +154,7 @@ jobs:
     steps:
       # No checkout: the decision core is inlined below so this workflow is a
       # single self-contained file that can be dropped into any repo.
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v9
         with:
           script: |
             // ---- BEGIN inlined .github/scripts/merge-decision.js ----------------
