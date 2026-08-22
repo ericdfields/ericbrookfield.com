@@ -108,7 +108,7 @@
 # so misuse is auditable after the fact.
 #
 # merge-gate-repo: ericdfields/ericbrookfield.com
-# merge-gate-version: 480261e4b749
+# merge-gate-version: e8db9bcbaa24
 
 name: merge-on-approval
 
