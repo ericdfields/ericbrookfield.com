@@ -30,6 +30,27 @@ updates:
     open-pull-requests-limit: 1
     labels:
       - "dependencies"
+    ignore:
+      # BRO-2427: `.github/workflows/merge-on-approval.yml` is GENERATED from
+      # brookfield-digital-os `scripts/merge-gate/workflow.template.yml`. It is
+      # not source, and Dependabot cannot read the DO-NOT-EDIT header on it.
+      #
+      # Left unignored, Dependabot bumps the action INSIDE the generated file.
+      # Every consequence is silent: merging it puts this repo in DRIFT against
+      # the template; the next regeneration REVERTS the bump while the record
+      # says the fix shipped; and it conflicts with any distribution PR, which
+      # is what stranded argus during the BRO-2200 wave.
+      #
+      # This is safe to ignore ONLY because `actions/github-script` is used in
+      # merge-on-approval.yml and NOWHERE ELSE in this repo — a dependency
+      # ignore is exactly scoped to that one file here. Verify that still holds
+      # before adding another entry.
+      #
+      # Advisories are NOT lost: brookfield-digital-os deliberately does not
+      # ignore this action, so a bump surfaces there as a red, unmergeable PR
+      # in the repo that owns the template. Fixes go into the template and
+      # arrive here by regeneration. Do not edit the generated file directly.
+      - dependency-name: "actions/github-script"
     groups:
       actions:
         patterns:
