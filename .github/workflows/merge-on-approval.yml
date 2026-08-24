@@ -57,6 +57,40 @@
 # every labeled-but-not-yet-merged PR (e.g. one labeled while CI was still
 # running) and emits a digest to the run summary.
 #
+# WHY `workflow_run` (BRO-2426): the ordinary ordering is that the label is
+# applied while CI is still running, so the `labeled` run above correctly
+# returns `wait-checks` — and until this trigger existed, NOTHING re-evaluated
+# the PR when the last check finished. No event fires on check completion, so
+# the PR waited for the next cron tick: up to 30 minutes of silence, which is
+# indistinguishable from the BRO-1694/1695 rot this workflow exists to end.
+# (argus #384: `wait-checks` at 02:15:40Z, `test` green at 02:18:44Z, nothing
+# re-ran, Eric merged by hand at 02:31:12Z.)
+#
+# WHY NOT `check_suite: [completed]`, which is the obvious answer and does not
+# work: "To prevent recursive workflows, this event does not trigger workflows
+# if the check suite was created by GitHub Actions or if the check suite's head
+# SHA is associated with GitHub Actions" (GitHub's words). EVERY required check
+# in repos.json is a GitHub Actions job — registry rule 1 says so explicitly,
+# because `checks.listForRef` cannot see anything else. Verified against the
+# live API before writing this: every check suite on `argus@main` reports
+# `app.slug == "github-actions"`. So a `check_suite` trigger here would parse,
+# install, audit clean, and fire exactly never — an inert trigger, which is a
+# strictly worse failure than the latency it was meant to fix. Do not "simplify"
+# this to `check_suite`; a test in sweep.test.mjs fails the fleet if you do.
+#
+# `workflow_run` fires on the completion of a NAMED workflow, so it needs the
+# per-repo `ciWorkflows` registry field — the cost `check_suite` appeared to
+# avoid. It buys the recursion argument outright: this workflow's own name is
+# never in that list, so a merge-on-approval run cannot re-trigger merge-on-
+# approval, and the chain terminates by construction rather than by relying on
+# GitHub's three-level cap. audit.mjs checks each registered name against the
+# live repo, so a renamed or deleted CI workflow is reported rather than
+# silently degrading back to cron-only.
+#
+# It is an ACCELERATOR, not a replacement. The `*/30` cron stays: `workflow_run`
+# only fires for workflows named in the registry, only once this file is on the
+# default branch, and a repo with no PR CI at all has no trigger to hang it on.
+#
 # POST-MERGE DISPATCH (BRO-2059): GitHub deliberately refuses to let a push made
 # with the default `GITHUB_TOKEN` trigger further `push` / `pull_request`
 # workflows — an anti-recursion guard. So this workflow merging a PR is NOT the
@@ -108,7 +142,7 @@
 # so misuse is auditable after the fact.
 #
 # merge-gate-repo: ericdfields/ericbrookfield.com
-# merge-gate-version: e8db9bcbaa24
+# merge-gate-version: 36598a46ea8d
 
 name: merge-on-approval
 
@@ -117,6 +151,13 @@ on:
   # branch, so the gate applies to PRs older than its own install (BRO-2244).
   pull_request_target:
     types: [labeled, synchronize]
+  # BRO-2426. The accelerator: without this, a PR labeled while CI was still
+  # running waits for the cron below, because no event fires on check completion.
+  # These are workflow `name:` values, not filenames, and never include this
+  # workflow — which is what makes the trigger non-recursive by construction.
+  workflow_run:
+    workflows: ["Layout check", "Audit"]
+    types: [completed]
   schedule:
     - cron: "*/30 * * * *" # backstop sweep for PRs labeled while CI was still running
   workflow_dispatch: # manual kick, useful for testing the sweep path
@@ -129,9 +170,26 @@ permissions:
   actions: write # re-dispatch the post-merge workflows a bot merge can't cascade to
 
 concurrency:
-  # One in-flight run per PR (event path) or per sweep (schedule path). Never
-  # cancel an in-progress run — a cancelled run mid-merge would be confusing.
-  group: merge-on-approval-${{ github.event.pull_request.number || github.run_id }}
+  # One in-flight run per PR on the event path; ONE shared lane for every sweep.
+  #
+  # BRO-2426: the sweep key used to be `github.run_id`, which is unique per run
+  # — i.e. no serialisation at all. That was harmless while the only sweeps were
+  # 30 minutes apart, and stops being harmless now that a finishing CI workflow
+  # starts one: several can complete within seconds of each other and each would
+  # run its own concurrent `pulls.list` + merge pass over the same PRs. Two runs
+  # racing the same PR is not idempotent — one wins `pulls.merge` and the other
+  # takes a 405 into the `errored` row, failing a run over a PR that merged fine.
+  #
+  # A shared group makes GitHub do the collapsing: with a run in progress, a
+  # newly-queued run becomes pending AND CANCELS whatever was already pending.
+  # So a burst of N sweeps costs at most 2 — the one running, plus the last one
+  # queued, which re-evaluates every PR from scratch and is therefore the only
+  # one whose result matters. Discarding the middle of a burst loses nothing.
+  #
+  # `cancel-in-progress` stays false, deliberately: cancelling a sweep mid-merge
+  # could land `pulls.merge` and never reach the post-merge dispatch, which is
+  # the BRO-2059 silent-no-deploy failure manufactured on purpose.
+  group: merge-on-approval-${{ github.event_name == 'pull_request_target' && format('pr-{0}', github.event.pull_request.number) || 'sweep' }}
   cancel-in-progress: false
 
 jobs:
@@ -154,7 +212,13 @@ jobs:
     steps:
       # No checkout: the decision core is inlined below so this workflow is a
       # single self-contained file that can be dropped into any repo.
-      - uses: actions/github-script@v7
+      # BRO-2499. v9 runs on node24, which is the default on the self-hosted
+      # [self-hosted, macOS, ARM64] pool (runner 2.336.0, externals/node24 =
+      # v24.18.0, usenode24bydefault=true) and on GitHub-hosted runners alike.
+      # Carried in this PR rather than its own because every byte of this
+      # template feeds versionOf() — bumping it alone would cost a second
+      # seven-repo distribution round for one line.
+      - uses: actions/github-script@v9
         with:
           script: |
             // ---- BEGIN inlined .github/scripts/merge-decision.js ----------------
@@ -173,19 +237,6 @@ jobs:
             // replaces.
 
             /**
-             * Resolve one check by name, preferring the most recently started run.
-             * GitHub appends a new check run per re-run attempt, so the first match may be
-             * a stale failure that a passing re-run has already superseded.
-             */
-            function latestRun(checkRuns, name) {
-              const runs = checkRuns.filter((c) => c.name === name);
-              if (runs.length === 0) return null;
-              return runs.reduce((newest, c) =>
-                Date.parse(c.started_at || 0) >= Date.parse(newest.started_at || 0) ? c : newest,
-              );
-            }
-
-            /**
              * Conclusions that mean "this check produced no verdict", as distinct from
              * "this check said no" (BRO-2370). A run killed mid-flight — the machine went
              * away, the queue was drained, a newer push superseded it — reports as a red X
@@ -196,6 +247,92 @@ jobs:
              */
             const NO_VERDICT = new Set(["cancelled", "stale"]);
 
+            /**
+             * Resolve what every check run reporting under one required name collectively
+             * says (BRO-2199).
+             *
+             * This used to pick a single run — the newest `started_at` — on the theory that
+             * "GitHub appends a new check run per re-run attempt, so the first match may be
+             * a stale failure a passing re-run has superseded". That theory is false, and
+             * the code built on it decided merges by a race.
+             *
+             * What is actually true, verified against the live API rather than recalled:
+             *
+             *   1. `checks.listForRef` defaults to `filter=latest`, and a re-run reports
+             *      into the SAME check suite, replacing its predecessor there. On
+             *      flora-stora run 32572005410 (attempt 1 `cancelled`, attempt 2 `success`,
+             *      one suite 88285379100) the default filter returns 13 runs and only
+             *      attempt 2's `npm audit (high)`; `filter=all` returns 15 and both. So
+             *      re-run supersession is done FOR us, upstream, before this code runs.
+             *      The workflow now pins `filter: 'latest'` explicitly rather than leaning
+             *      on a default, because this function's correctness depends on it.
+             *
+             *   2. Therefore anything still sharing a name here is not a re-run of one
+             *      assertion — it is a DIFFERENT check suite. Two ways that happens, both
+             *      observed in this fleet:
+             *
+             *        a. TWO TRIGGERS. bd-os's `verified-done.yml` fired on both
+             *           `push: ["**"]` and `pull_request`; on commit dc39b9e9 that produced
+             *           `verified-done gate` twice, suite 86709733094 (push, 00:15:00,
+             *           FAILURE) and suite 86709812811 (PR, 00:15:37, success). The old
+             *           reduce kept the green one because it started 37 seconds later and
+             *           the merge went through. Reverse the ordering — a scheduling
+             *           coincidence — and it would have refused a PR whose own tests all
+             *           passed. That particular duplicate is now gone at the source (its
+             *           push trigger is `branches: [main]`), but the shape is not: jlnk's
+             *           ci.yml still produces it on 14 of its last 15 PRs, and this core
+             *           ships to seven repos whose triggers it does not control.
+             *
+             *        b. TWO PULL REQUESTS ON ONE COMMIT. Stacked or split branches can
+             *           share a head SHA, and each PR gets its own suite — argus e93218c3
+             *           carried all six required names twice, both `pull_request`, both
+             *           attempt 1, from branches BRO-2481 and BRO-2320. `listForRef` is
+             *           keyed by commit, not by PR, so both come back. These can disagree
+             *           if the PRs have different bases, since a `pull_request` run tests
+             *           the merge commit.
+             *
+             *      There is no way to attribute a run to one PR from this payload: GitHub
+             *      returns `pull_requests: []` on every check run in these repos (verified
+             *      on both bd-os and argus — they are private, and the field is only
+             *      populated for the repo that owns the PR in ways this org does not get).
+             *      So case (b) is handled the same way as (a) — every verdict counts — and
+             *      `splitChecks` exists to tell the approver a name reported more than once
+             *      rather than leaving them to wonder why their green PR is blocked.
+             *
+             * So: a red is never discarded. Every verdict rendered under a required name
+             * has to be green. The rules, in precedence order:
+             *
+             *   failed    — any run reached a real non-success conclusion. Final: no
+             *               sibling can un-fail it, so this beats a still-running sibling.
+             *   pending   — no red, but something has not reported yet.
+             *   success   — at least one affirmative green verdict, and no red. A sibling
+             *               that was cancelled is silence (BRO-2370), not dissent, so it
+             *               does not veto a green that did render a verdict.
+             *   cancelled — runs exist but every one of them is a no-verdict.
+             *   missing   — no run at all.
+             *
+             * `started_at` is deliberately not read. The old `Date.parse(c.started_at || 0)`
+             * also yielded NaN on a run missing the field, and every `NaN >= NaN` is false,
+             * so such a run silently lost the reduce regardless of ordering. Nothing here
+             * consults a clock any more, so that bug is gone rather than patched.
+             */
+            function resolveCheck(checkRuns, name) {
+              const runs = checkRuns.filter((c) => c.name === name);
+              if (runs.length === 0) return { state: "missing", runs, failed: [] };
+
+              const completed = runs.filter((c) => c.status === "completed");
+              const failed = completed.filter(
+                (c) => !NO_VERDICT.has(c.conclusion) && c.conclusion !== "success",
+              );
+
+              if (failed.length) return { state: "failed", runs, failed };
+              if (completed.length < runs.length) return { state: "pending", runs, failed };
+              if (completed.some((c) => c.conclusion === "success")) {
+                return { state: "success", runs, failed };
+              }
+              return { state: "cancelled", runs, failed };
+            }
+
             function decideMerge(input) {
               const {
                 merged, state, draft, mergeable, labels, checkRuns,
@@ -203,7 +340,9 @@ jobs:
                 labelAppliedAtMs, nowMs, stallAfterMs,
               } = input;
 
-              const nothing = { armedBy: null, missingChecks: [], failedChecks: [], cancelledChecks: [] };
+              const nothing = {
+                armedBy: null, missingChecks: [], failedChecks: [], cancelledChecks: [], splitChecks: [],
+              };
 
               if (merged) return { action: "already-merged", reason: "already merged", ...nothing };
               if (state !== "open") return { action: "closed", reason: `PR is ${state}`, ...nothing };
@@ -230,21 +369,46 @@ jobs:
               const missingChecks = [];
               const failedChecks = [];
               const cancelledChecks = [];
+              /**
+               * Required names that reported more than once on this commit. This is the
+               * BRO-2024 half of BRO-2199: the approver sees one red check called
+               * `verified-done gate` and has no way to tell it came from a full-repo push
+               * run rather than from their own diff. Naming the split — and linking the red
+               * run specifically — is what makes that visible instead of mysterious.
+               */
+              const splitChecks = [];
               let pending = 0;
 
               for (const name of requiredChecks) {
-                const run = latestRun(checkRuns, name);
-                if (!run) missingChecks.push(name);
-                else if (run.status !== "completed") pending++;
-                else if (NO_VERDICT.has(run.conclusion)) cancelledChecks.push(name);
-                else if (run.conclusion !== "success") failedChecks.push(name);
+                const c = resolveCheck(checkRuns, name);
+                if (c.runs.length > 1) {
+                  splitChecks.push({
+                    name,
+                    total: c.runs.length,
+                    failedCount: c.failed.length,
+                    failedUrls: c.failed.map((r) => r.details_url).filter(Boolean),
+                  });
+                }
+                if (c.state === "missing") missingChecks.push(name);
+                else if (c.state === "pending") pending++;
+                else if (c.state === "cancelled") cancelledChecks.push(name);
+                else if (c.state === "failed") failedChecks.push(name);
               }
 
-              const common = { armedBy, missingChecks, failedChecks, cancelledChecks };
+              const common = { armedBy, missingChecks, failedChecks, cancelledChecks, splitChecks };
 
               // A red check is a normal outcome the author owns — report it and stop.
               if (failedChecks.length) {
-                return { action: "blocked-checks", reason: `failing: ${failedChecks.join(", ")}`, ...common };
+                const described = failedChecks.map((name) => {
+                  const split = splitChecks.find((s) => s.name === name);
+                  // Say it out loud when the red is one of several runs sharing this name.
+                  // "failing: verified-done gate" reads as "your diff is broken"; it may
+                  // instead be a second trigger asserting something wider (BRO-2199).
+                  return split
+                    ? `${name} (${split.failedCount} of ${split.total} runs reporting under that name)`
+                    : name;
+                });
+                return { action: "blocked-checks", reason: `failing: ${described.join(", ")}`, ...common };
               }
 
               if (missingChecks.length || cancelledChecks.length || pending) {
@@ -420,8 +584,17 @@ jobs:
             async function attemptMerge(n, { verbose }) {
               const pr = await pollMergeable(n);
               const sha = pr.head.sha;
+              // `filter: 'latest'` is the API default, pinned here on purpose:
+              // resolveCheck's correctness depends on it (BRO-2199). Under
+              // `latest` GitHub has already collapsed re-run attempts — a
+              // re-run reports into the same check suite and replaces its
+              // predecessor there — so every duplicate name the decision core
+              // still sees is a SECOND TRIGGER, which it must not resolve by
+              // clock. Switching this to 'all' would resurrect superseded reds
+              // and hang every re-run recovery; don't, without reading that
+              // function first.
               const { data: checks } = await github.rest.checks.listForRef({
-                owner, repo, ref: sha, per_page: 100,
+                owner, repo, ref: sha, per_page: 100, filter: 'latest',
               });
               const who = await labelEvent(n);
 
@@ -464,9 +637,29 @@ jobs:
               }
 
               if (d.action === 'blocked-checks') {
+                // BRO-2199/BRO-2024. When a required name reported more than
+                // once on this commit, the runs came from different check
+                // suites — a second trigger, or a second PR sharing this head
+                // commit — and can legitimately assert different things: a push
+                // run may cover the whole repo while the PR run covers the diff.
+                // Say which run is red and link it, because from the approver's
+                // side a bare "verified-done gate is red" is indistinguishable
+                // from "your diff broke something".
+                const split = (d.splitChecks || []).filter((s) => s.failedCount > 0);
+                const splitNote = split.length
+                  ? `\n\n> ⚠️ ${split.map((s) =>
+                      `\`${s.name}\` reported **${s.total} times** on \`${sha.slice(0, 7)}\` and ` +
+                      `${s.failedCount} of those runs is red` +
+                      (s.failedUrls.length ? ` (${s.failedUrls.map((u) => `[red run](${u})`).join(', ')})` : '')
+                    ).join('; ')}. ` +
+                    `Runs sharing a name come from different triggers, or from another PR built on ` +
+                    `this same commit — check whether the red one is actually about this diff ` +
+                    `before pushing a fix.`
+                  : '';
                 await postOnce(n, `<!-- merge-on-approval:failed:${sha} -->`,
                   `❌ \`${d.armedBy}\` is set but CI is red — ${d.reason}. ` +
-                  `Push a fix; the label stays and I'll merge once the checks go green.`);
+                  `Push a fix; the label stays and I'll merge once the checks go green.` +
+                  splitNote);
                 return { number: n, status: 'blocked-checks' };
               }
 
@@ -583,12 +776,23 @@ jobs:
                   results.push({ number: pr.number, status: 'label-stripped' });
                 }
               }
-            } else if (event === 'schedule' || event === 'workflow_dispatch') {
+            } else if (event === 'schedule' || event === 'workflow_dispatch' || event === 'workflow_run') {
+              // BRO-2426. `workflow_run` routes down the SAME sweep path rather
+              // than targeting the triggering PR, on purpose. The event does
+              // carry `workflow_run.pull_requests[]`, but that array is empty
+              // for fork PRs and unreliable in general — and precision buys
+              // nothing here. The sweep is one `pulls.list` plus real work only
+              // for PRs carrying an arming label, which is usually zero or one,
+              // and it is naturally idempotent. Routing to a second code path
+              // to save one API call would double the surface that can break.
               const prs = await github.paginate(github.rest.pulls.list, {
                 owner, repo, state: 'open', per_page: 100,
               });
               const labeled = prs.filter((p) => (p.labels || []).some((l) => APPROVAL_LABELS.includes(l.name)));
-              core.info(`Sweep: ${labeled.length} open PR(s) carrying ${APPROVAL_LABELS.join(' or ')}.`);
+              const trigger = event === 'workflow_run' && context.payload.workflow_run
+                ? ` (triggered by \`${context.payload.workflow_run.name}\` → ${context.payload.workflow_run.conclusion})`
+                : '';
+              core.info(`Sweep${trigger}: ${labeled.length} open PR(s) carrying ${APPROVAL_LABELS.join(' or ')}.`);
               for (const p of labeled) {
                 // The sweep is the BACKSTOP — it is the only thing that retries a
                 // PR labeled while CI was still running, and it must therefore
