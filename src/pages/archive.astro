@@ -45,7 +45,7 @@ for (const year of years) {
         const localUrl = urlMatch
             ? `/${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
             : `/blog/${post.id}`;
-        const plainText = stripMarkdown(post.body);
+        const plainText = (post.body || "").replace ? stripMarkdown(post.body || "") : "";
         const displayTitle = post.data.title || (plainText ? plainText.substring(0, 95) + "..." : "No content available");
         return { formattedDate, localUrl, displayTitle };
     });
