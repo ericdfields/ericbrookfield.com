@@ -142,7 +142,7 @@
 # so misuse is auditable after the fact.
 #
 # merge-gate-repo: ericdfields/ericbrookfield.com
-# merge-gate-version: 36598a46ea8d
+# merge-gate-version: 6c4cd899a55e
 
 name: merge-on-approval
 
@@ -159,7 +159,7 @@ on:
     workflows: ["Layout check", "Audit"]
     types: [completed]
   schedule:
-    - cron: "*/30 * * * *" # backstop sweep for PRs labeled while CI was still running
+    - cron: "0 * * * *" # backstop sweep for PRs labeled while CI was still running
   workflow_dispatch: # manual kick, useful for testing the sweep path
 
 permissions:
