@@ -14,9 +14,9 @@ jobs:
   layout:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # astro 7 requires Node >=22.12.0 — matches deploy.yml (BRO-910/BRO-854)
           node-version: 22
