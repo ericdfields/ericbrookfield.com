@@ -142,7 +142,7 @@
 # so misuse is auditable after the fact.
 #
 # merge-gate-repo: ericdfields/ericbrookfield.com
-# merge-gate-version: 6c4cd899a55e
+# merge-gate-version: e85f66567742
 
 name: merge-on-approval
 
@@ -218,8 +218,29 @@ jobs:
       # Carried in this PR rather than its own because every byte of this
       # template feeds versionOf() — bumping it alone would cost a second
       # seven-repo distribution round for one line.
+      # BRO billing-floor Phase 3: merges/deletes as a GitHub App installation
+      # token (brkd-merge-relay, App ID in MERGE_GATE_APP_ID) instead of the
+      # default GITHUB_TOKEN. GITHUB_TOKEN-authored pushes and branch deletes
+      # never cascade into further workflow runs (GitHub's anti-recursion
+      # guard) — that's the whole reason POST_MERGE_DISPATCH below has to
+      # re-dispatch deploys by hand instead of letting `on: push` fire
+      # naturally. An App token isn't subject to that guard.
+      # ONLY wired up for repos carrying both MERGE_GATE_APP_ID and
+      # MERGE_GATE_APP_PRIVATE_KEY as secrets (argus, brookfield-digital-os,
+      # flora-stora, ericbrookfield.com, leadrrr as of this comment) — the App
+      # is also only installed on those five. Regenerating this workflow for
+      # any OTHER repo in repos.json without first adding those secrets AND
+      # installing the App there will fail this step outright (loud failure,
+      # not a silent merge-gate outage — but check before you regenerate).
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.MERGE_GATE_APP_ID }}
+          private-key: ${{ secrets.MERGE_GATE_APP_PRIVATE_KEY }}
+
       - uses: actions/github-script@v9
         with:
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             // ---- BEGIN inlined .github/scripts/merge-decision.js ----------------
             // Pure decision core for merge-on-approval. No network, no Octokit, no clock —
