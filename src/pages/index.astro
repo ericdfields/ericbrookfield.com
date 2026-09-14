@@ -32,7 +32,7 @@ const processedPosts = recentPosts.map((post) => {
     const localUrl = urlMatch
         ? `/${urlMatch[1]}/${urlMatch[2]}/${urlMatch[3]}/${urlMatch[4]}`
         : `/blog/${post.id}`;
-    const plainText = stripMarkdown(post.body);
+    const plainText = stripMarkdown(post.body || "");
     const displayTitle = post.data.title || (plainText ? plainText.substring(0, 80) + '...' : 'Untitled');
     return { formattedDate, localUrl, displayTitle };
 });

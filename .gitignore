@@ -26,3 +26,5 @@ pnpm-debug.log*
 # git worktrees
 .worktrees/
 data/timeline-ai.json
+.pi/
+.paperclip/
