@@ -51,6 +51,10 @@ updates:
       # in the repo that owns the template. Fixes go into the template and
       # arrive here by regeneration. Do not edit the generated file directly.
       - dependency-name: "actions/github-script"
+      # Same reasoning as above, for the App-token step added to
+      # merge-on-approval.yml in the BRO billing-floor Phase 3 change
+      # (verified used nowhere else in this repo's workflows at the time).
+      - dependency-name: "actions/create-github-app-token"
     groups:
       actions:
         patterns:
