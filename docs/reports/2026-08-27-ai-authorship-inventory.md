@@ -1,6 +1,12 @@
 # AI Authorship Inventory & Editorial Reset — Inventory Report
 
 **Date:** 2026-08-27
+
+> **Update (2026-11-10):** "Withdrawal" became "repositioning." The front-matter
+> flag is now `repositioned: true`, not `withdrawn: true`. A repositioned post
+> shows a short note that Eric co-wrote it with Claude and that the voice is not
+> his. Its text is struck through, and readers can toggle the strikethrough off.
+> The rest of this report keeps its original wording.
 **Scope:** Posts dated approximately November 2025 onward on ericbrookfield.com.
 **Method:** Evidence-limited. Classification drawn only from:
   1. Direct repository / Git evidence in the local checkout;

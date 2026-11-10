@@ -14,9 +14,9 @@ const blog = defineCollection({
     // Authorship metadata for editorial transparency.
     // Not retroactively applied to posts where provenance is unknown.
     authorship: authorshipEnum.optional(),
-    // When true, the post is displayed with a withdrawal notice and the
-    // original prose is struck through. Source text is preserved.
-    withdrawn: z.boolean().optional(),
+    // When true, the post shows a notice that the voice isn't Eric's, and the
+    // prose is struck through. Readers can toggle the strikethrough off.
+    repositioned: z.boolean().optional(),
   }),
 });
 
