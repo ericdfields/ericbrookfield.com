@@ -23,8 +23,10 @@ export async function getStaticPaths() {
 const { post, slug } = Astro.props;
 const { Content } = await render(post);
 const date = post.data.date;
+const isRepositioned = post.data.repositioned === true;
+const confessionalBoothUrl = "/2026/08/26/confessional-booth.html";
 
-const plainText = post.body
+const plainText = (post.body || "")
     .replace(/<[^>]*>/g, "")
     .replace(/\n+/g, " ")
     .trim();
@@ -36,7 +38,7 @@ const displayTitle =
 // Per-post meta description (BRO-989): prefer the post's own `description`
 // frontmatter; otherwise derive a factual excerpt from the post's own body.
 // Falls back to the Layout site default if the post has no usable text.
-const excerpt = post.body
+const excerpt = (post.body || "")
     .replace(/!\[[^\]]*\]\([^)]*\)/g, "") // markdown images
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // markdown links -> text
     .replace(/<[^>]*>/g, "") // html tags
@@ -92,12 +94,37 @@ const blogPostingJsonLd = {
                     By <a href="/" rel="author">Eric Brookfield</a>
                 </p>
             </header>
-            <div class="post-content">
+            {isRepositioned && (
+                <aside class="voice-notice" aria-label="Note about this post">
+                    <p>
+                        Just letting you know I co-wrote this with Claude. The
+                        content is factually accurate, but after sitting with it
+                        for some time I decided the voice is really not mine.
+                        You can <a href={confessionalBoothUrl}>read more about this decision here</a>.
+                        Feel free to toggle off the strikethrough if you'd like
+                        to keep reading.
+                    </p>
+                    <button
+                        type="button"
+                        class="strike-toggle"
+                        aria-pressed="true"
+                        aria-controls="post-content"
+                        hidden
+                    >
+                        Strikethrough: on
+                    </button>
+                </aside>
+            )}
+            <div
+                id="post-content"
+                class:list={["post-content", { "is-struck": isRepositioned }]}
+            >
                 <Content />
             </div>
             <footer class="post-footer">
                 <a href="/">Home</a>
                 <a href="/archive">Archive</a>
+                <a href="/about">About</a>
             </footer>
         </div>
     </article>
@@ -282,6 +309,56 @@ const blogPostingJsonLd = {
         color: var(--color-accent);
     }
 
+    /* Repositioned-post notice */
+    .voice-notice {
+        border-left: 3px solid var(--color-accent);
+        background: rgba(227, 222, 212, 0.04);
+        padding: var(--spacing-md);
+        margin: 0 0 var(--spacing-lg);
+    }
+
+    .voice-notice p {
+        margin: 0 0 var(--spacing-sm);
+        line-height: 1.65;
+        color: var(--color-text);
+    }
+
+    .voice-notice a {
+        color: var(--color-accent);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .voice-notice a:hover {
+        color: var(--color-text);
+    }
+
+    .strike-toggle {
+        font-family: var(--font-mono);
+        font-size: var(--text-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--color-text-muted);
+        background: none;
+        border: 1px solid var(--color-rule);
+        padding: 0.35em 0.75em;
+        cursor: pointer;
+    }
+
+    .strike-toggle:hover,
+    .strike-toggle:focus-visible {
+        color: var(--color-accent);
+        border-color: var(--color-accent);
+    }
+
+    /* Strike the whole body once. Children inherit the line and the
+       dimming, so nested text is not dimmed twice. */
+    .post-content.is-struck {
+        text-decoration: line-through;
+        text-decoration-color: var(--color-text-muted);
+        opacity: 0.65;
+    }
+
     @media (max-width: 768px) {
         .post {
             padding: var(--spacing-lg) 0;
@@ -292,3 +369,32 @@ const blogPostingJsonLd = {
         }
     }
 </style>
+
+<script>
+    const STORAGE_KEY = "strikethrough";
+    const button = document.querySelector<HTMLButtonElement>(".strike-toggle");
+    const content = document.getElementById("post-content");
+
+    if (button && content) {
+        const apply = (on: boolean) => {
+            content.classList.toggle("is-struck", on);
+            button.setAttribute("aria-pressed", String(on));
+            button.textContent = `Strikethrough: ${on ? "on" : "off"}`;
+        };
+
+        let saved: string | null = null;
+        try {
+            saved = localStorage.getItem(STORAGE_KEY);
+        } catch {}
+        apply(saved !== "off");
+        button.hidden = false;
+
+        button.addEventListener("click", () => {
+            const on = button.getAttribute("aria-pressed") !== "true";
+            apply(on);
+            try {
+                localStorage.setItem(STORAGE_KEY, on ? "on" : "off");
+            } catch {}
+        });
+    }
+</script>
